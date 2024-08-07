@@ -1,0 +1,10 @@
+version: '3.8'
+
+# to test operations on linux
+services:
+  tomo-dev:
+    image: rust:1.80-slim-bullseye
+    volumes:
+      - .:/usr/src/app
+    working_dir: /usr/src/app
+    command: sleep infinity
