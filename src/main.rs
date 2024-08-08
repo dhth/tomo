@@ -5,10 +5,12 @@ use clap::{Parser, Subcommand};
 use dirs::data_dir;
 use std::fs;
 use std::path::PathBuf;
-use tomo::{show_progress, start_tracking, stop_tracking, take_break};
+use tomo::{show_progress, start_tracking, stop_tracking, take_break, ShowConfig};
 
 const DATA_DIR: &str = "tomo";
 const DATA_FILE: &str = ".tomo";
+const STOP_STRING: &str = "stop";
+const BREAK_STRING: &str = "break";
 
 /// tomo is a no-frills pomodoro progress indicator intended for tmux and similar terminal multiplexers
 #[derive(Parser, Debug)]
@@ -16,12 +18,30 @@ const DATA_FILE: &str = ".tomo";
 struct Args {
     #[command(subcommand)]
     action: Option<Action>,
+    /// String to represent a "pending" block in the progress bar
+    #[arg(short = 'p', long = "pending-block", value_name = "STRING")]
+    #[clap(default_value = "▫")]
+    pending_block: String,
+    /// String to represent a "complete" block in the progress bar
+    #[arg(short = 'c', long = "complete-block", value_name = "STRING")]
+    #[clap(default_value = "▪")]
+    complete_block: String,
     /// String to pad the output with on the LHS
-    #[arg(long = "left-pad", value_name = "STRING")]
-    left_pad: Option<String>,
+    #[arg(short = 'l', long = "left-pad", value_name = "STRING")]
+    #[clap(default_value = " ")]
+    left_pad: String,
     /// String to pad the output with on the RHS
-    #[arg(long = "right-pad", value_name = "STRING")]
-    right_pad: Option<String>,
+    #[arg(short = 'r', long = "right-pad", value_name = "STRING")]
+    #[clap(default_value = " ")]
+    right_pad: String,
+    /// Delimiter between progress bar chunks
+    #[arg(short = 'd', long = "delimiter", value_name = "STRING")]
+    #[clap(default_value = "")]
+    delimiter: String,
+    /// Number of blocks to show in progress bar
+    #[arg(short = 'n', long = "num-blocks", value_name = "NUM")]
+    #[clap(default_value = "10")]
+    num_blocks: u8,
 }
 
 #[derive(Subcommand, Debug, Clone)]
@@ -36,6 +56,11 @@ enum Action {
 
 fn main() {
     let args = Args::parse();
+
+    if !(3..=100).contains(&args.num_blocks) {
+        eprintln!("Error: number of blocks needs to be between 3 and 100");
+        process::exit(1);
+    }
 
     let user_data_dir = data_dir().unwrap_or(PathBuf::from("."));
     let data_dir = user_data_dir.join(PathBuf::from(DATA_DIR));
@@ -52,10 +77,21 @@ fn main() {
     let now = Utc::now();
 
     let result = match args.action {
-        None => show_progress(&data_file_path, now, args.left_pad, args.right_pad),
+        None => {
+            let config = ShowConfig {
+                pending_block: args.pending_block,
+                complete_block: args.complete_block,
+                left_pad: args.left_pad,
+                right_pad: args.right_pad,
+                delimiter: args.delimiter,
+                num_blocks: args.num_blocks,
+            };
+
+            show_progress(&data_file_path, now, BREAK_STRING, STOP_STRING, config)
+        }
         Some(Action::Start) => start_tracking(&data_file_path, now),
-        Some(Action::Stop) => stop_tracking(&data_file_path),
-        Some(Action::Break) => take_break(&data_file_path),
+        Some(Action::Stop) => stop_tracking(&data_file_path, STOP_STRING),
+        Some(Action::Break) => take_break(&data_file_path, BREAK_STRING),
     };
 
     if let Err(e) = result {

@@ -4,48 +4,48 @@ use chrono::DateTime;
 use std::fs::{self};
 use std::path::PathBuf;
 
-const STOP_STRING: &str = "stop";
-const BREAK_STRING: &str = "break";
 const BREAK_INDICATOR: &str = "\\o/";
-const DEFAULT_PAD: &str = " ";
+
+pub struct ShowConfig {
+    pub pending_block: String,
+    pub complete_block: String,
+    pub left_pad: String,
+    pub right_pad: String,
+    pub delimiter: String,
+    pub num_blocks: u8,
+}
 
 pub fn start_tracking(file_path: &PathBuf, time: DateTime<Utc>) -> Result<()> {
     fs::write(file_path, time.to_rfc3339())
         .with_context(|| format!("could not write to file `{:?}`", file_path))
 }
 
-pub fn take_break(file_path: &PathBuf) -> Result<()> {
-    fs::write(file_path, BREAK_STRING)
+pub fn take_break(file_path: &PathBuf, break_string: &str) -> Result<()> {
+    fs::write(file_path, break_string)
         .with_context(|| format!("couldn't write to file: `{:?}`", file_path))
 }
 
-pub fn stop_tracking(file_path: &PathBuf) -> Result<()> {
-    fs::write(file_path, STOP_STRING)
+pub fn stop_tracking(file_path: &PathBuf, stop_string: &str) -> Result<()> {
+    fs::write(file_path, stop_string)
         .with_context(|| format!("couldn't write to file: `{:?}`", file_path))
 }
 
 pub fn show_progress(
     file_path: &PathBuf,
     now: DateTime<Utc>,
-    left_pad: Option<String>,
-    right_pad: Option<String>,
+    break_string: &str,
+    stop_string: &str,
+    config: ShowConfig,
 ) -> Result<()> {
     let status = fs::read_to_string(file_path)
         .with_context(|| format!("couldn't not read from file {:?}", file_path))?;
 
-    if status == STOP_STRING {
+    if status == stop_string {
         return Ok(());
     }
 
-    let default_pad = String::from(DEFAULT_PAD);
-
-    if status == BREAK_STRING {
-        print!(
-            "{}{}{}",
-            left_pad.unwrap_or(default_pad.clone()),
-            BREAK_STRING,
-            right_pad.unwrap_or(default_pad.clone())
-        );
+    if status == break_string {
+        print!("{}{}{}", config.left_pad, break_string, config.right_pad,);
         return Ok(());
     }
 
@@ -55,33 +55,31 @@ pub fn show_progress(
         .with_context(|| "couldn't not parse time from tomo's data file {:?}")?;
 
     let diff_seconds = now.signed_duration_since(ts.to_utc()).num_seconds();
-    let chunks = diff_seconds / 150;
+    let chunks = diff_seconds / (25 * 60 / (config.num_blocks as i64));
 
-    if chunks >= 10 {
-        print!(
-            "{}{}{}",
-            left_pad.unwrap_or(default_pad.clone()),
-            BREAK_INDICATOR,
-            right_pad.unwrap_or(default_pad.clone())
-        );
+    if chunks >= config.num_blocks as i64 {
+        print!("{}{}{}", config.left_pad, BREAK_INDICATOR, config.right_pad,);
         return Ok(());
     }
 
     let mut bar = String::new();
 
     for _ in 0..chunks {
-        bar.push('▪')
-    }
-    for _ in 0..(10 - chunks) {
-        bar.push('▫')
+        bar.push_str(&config.complete_block);
+        if config.delimiter.ne("") {
+            bar.push_str(&config.delimiter);
+        }
     }
 
-    print!(
-        "{}{}{}",
-        left_pad.unwrap_or(default_pad.clone()),
-        bar,
-        right_pad.unwrap_or(default_pad.clone())
-    );
+    for _ in 0..((config.num_blocks as i64) - chunks - 1) {
+        bar.push_str(&config.pending_block);
+        if config.delimiter.ne("") {
+            bar.push_str(&config.delimiter);
+        }
+    }
+    bar.push_str(&config.pending_block);
+
+    print!("{}{}{}", config.left_pad, bar, config.right_pad,);
 
     Ok(())
 }
