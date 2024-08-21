@@ -14,7 +14,6 @@ env:
 
 jobs:
   run:
-    name: run
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
@@ -29,5 +28,8 @@ jobs:
         run: |
           ./target/release/tomo start
           ./target/release/tomo
+          echo ""
           ./target/release/tomo break
           ./target/release/tomo stop
+          ./target/release/tomo start -e 10
+          ./target/release/tomo -p='⣀' -c='⣿' -n=20

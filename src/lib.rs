@@ -6,7 +6,7 @@ use std::path::PathBuf;
 
 const BREAK_INDICATOR: &str = "\\o/";
 
-pub struct ShowConfig {
+pub struct DisplayConfig {
     pub pending_block: String,
     pub complete_block: String,
     pub left_pad: String,
@@ -35,7 +35,7 @@ pub fn show_progress(
     now: DateTime<Utc>,
     break_string: &str,
     stop_string: &str,
-    config: ShowConfig,
+    config: DisplayConfig,
 ) -> Result<()> {
     let status = fs::read_to_string(file_path)
         .with_context(|| format!("couldn't not read from file {:?}", file_path))?;

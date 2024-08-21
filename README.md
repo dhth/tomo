@@ -49,3 +49,9 @@ Add the following to your tmux config (or modify it accordingly).
 ```
 set -g status-right "#(tomo)"
 ```
+
+### Start tracking with time already elapsed
+
+```bash
+tomo start --elapsed-mins 10
+```

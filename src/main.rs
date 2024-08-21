@@ -1,16 +1,17 @@
 use std::process;
 
-use chrono::Utc;
+use chrono::{Duration, Utc};
 use clap::{Parser, Subcommand};
 use dirs::data_dir;
 use std::fs;
 use std::path::PathBuf;
-use tomo::{show_progress, start_tracking, stop_tracking, take_break, ShowConfig};
+use tomo::{show_progress, start_tracking, stop_tracking, take_break, DisplayConfig};
 
 const DATA_DIR: &str = "tomo";
 const DATA_FILE: &str = ".tomo";
 const STOP_STRING: &str = "stop";
 const BREAK_STRING: &str = "break";
+const ELAPSED_MINS_UPPER_LIMIT: u8 = 20;
 
 /// tomo is a no-frills pomodoro progress indicator intended for tmux and similar terminal multiplexers
 #[derive(Parser, Debug)]
@@ -47,7 +48,12 @@ struct Args {
 #[derive(Subcommand, Debug, Clone)]
 enum Action {
     /// Start a pomodoro timer
-    Start,
+    Start {
+        /// Start tracking with n minutes already elapsed
+        #[arg(short = 'e', long = "elapsed-mins", value_name = "NUM")]
+        #[clap(default_value = "0")]
+        elapsed_mins: u8,
+    },
     /// Stop timer
     Stop,
     /// Start a break
@@ -78,7 +84,7 @@ fn main() {
 
     let result = match args.action {
         None => {
-            let config = ShowConfig {
+            let config = DisplayConfig {
                 pending_block: args.pending_block,
                 complete_block: args.complete_block,
                 left_pad: args.left_pad,
@@ -89,7 +95,19 @@ fn main() {
 
             show_progress(&data_file_path, now, BREAK_STRING, STOP_STRING, config)
         }
-        Some(Action::Start) => start_tracking(&data_file_path, now),
+        Some(Action::Start { elapsed_mins }) => {
+            if elapsed_mins > ELAPSED_MINS_UPPER_LIMIT {
+                eprintln!(
+                    "Error: elapsed mins cannot be greater than {}",
+                    ELAPSED_MINS_UPPER_LIMIT
+                );
+                process::exit(1);
+            }
+            start_tracking(
+                &data_file_path,
+                now - Duration::minutes(elapsed_mins as i64),
+            )
+        }
         Some(Action::Stop) => stop_tracking(&data_file_path, STOP_STRING),
         Some(Action::Break) => take_break(&data_file_path, BREAK_STRING),
     };
