@@ -1,6 +1,6 @@
 [package]
 name = "tomo"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 repository = "https://github.com/dhth/tomo"
 description = "tomo is a no-frills pomodoro progress indicator for tmux"
@@ -35,3 +35,5 @@ install-path = "CARGO_HOME"
 publish-jobs = ["homebrew"]
 # Whether to install an updater program
 install-updater = false
+# Whether to enable GitHub Attestations
+github-attestations = true
