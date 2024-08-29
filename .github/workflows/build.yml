@@ -26,3 +26,27 @@ jobs:
           components: clippy, rustfmt
       - name: Build
         run: cargo build --verbose
+      - name: Test
+        run: cargo test --verbose
+
+  run:
+    needs: build
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install toolchain
+        uses: dtolnay/rust-toolchain@stable
+      - name: Build
+        run: cargo build --release
+      - name: Run
+        run: |
+          ./target/release/tomo start
+          ./target/release/tomo
+          echo ""
+          ./target/release/tomo break
+          ./target/release/tomo stop
+          ./target/release/tomo start -e 10
+          ./target/release/tomo -p='⣀' -c='⣿' -n=20
