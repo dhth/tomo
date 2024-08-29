@@ -10,12 +10,11 @@ pub const DEFAULT_LEFT_PAD: &str = " ";
 pub const DEFAULT_RIGHT_PAD: &str = " ";
 pub const DEFAULT_DELIMITER: &str = "";
 pub const DEFAULT_NUM_BLOCKS: u8 = 10;
+pub const DEFAULT_FINISHED_MSG: &str = "done";
+pub const DEFAULT_BREAK_MSG: &str = "\\o/";
 
 pub const BREAK_STRING: &str = "break";
-pub const DONE_STRING: &str = "done";
 pub const STOP_STRING: &str = "stop";
-
-pub const BREAK_INDICATOR: &str = "\\o/";
 
 pub struct DisplayConfig {
     pub pending_block: String,
@@ -24,6 +23,8 @@ pub struct DisplayConfig {
     pub right_pad: String,
     pub delimiter: String,
     pub num_blocks: u8,
+    pub finished_msg: String,
+    pub break_msg: String,
 }
 
 impl Default for DisplayConfig {
@@ -35,6 +36,8 @@ impl Default for DisplayConfig {
             right_pad: DEFAULT_RIGHT_PAD.to_string(),
             delimiter: DEFAULT_DELIMITER.to_string(),
             num_blocks: DEFAULT_NUM_BLOCKS,
+            finished_msg: DEFAULT_FINISHED_MSG.to_string(),
+            break_msg: DEFAULT_BREAK_MSG.to_string(),
         }
     }
 }
@@ -67,7 +70,10 @@ pub fn show_progress(
     }
 
     if status == BREAK_STRING {
-        print!("{}{}{}", config.left_pad, BREAK_STRING, config.right_pad,);
+        print!(
+            "{}{}{}",
+            config.left_pad, config.break_msg, config.right_pad,
+        );
         return Ok(());
     }
 
@@ -87,7 +93,10 @@ pub fn get_progress_bar(diff_seconds: i64, config: &DisplayConfig) -> String {
     let chunks = diff_seconds / (25 * 60 / (config.num_blocks as i64));
 
     if chunks >= config.num_blocks as i64 {
-        return format!("{}{}{}", config.left_pad, DONE_STRING, config.right_pad,);
+        return format!(
+            "{}{}{}",
+            config.left_pad, config.finished_msg, config.right_pad,
+        );
     }
 
     let mut bar = String::new();
@@ -220,16 +229,22 @@ mod tests {
     }
 
     #[test]
-    fn get_progress_shows_done_string_when_timer_is_finished() {
+    fn get_progress_shows_finished_msg_when_timer_is_finished() {
         // GIVEN
-        let config = DisplayConfig::default();
+        let default_config = DisplayConfig::default();
+        let config = DisplayConfig {
+            left_pad: String::from("[["),
+            right_pad: String::from("]]"),
+            finished_msg: String::from("fertig"),
+            ..default_config
+        };
 
         // WHEN
         let got_at_min_25 = get_progress_bar(25 * 60, &config);
         let got_at_min_26 = get_progress_bar(26 * 60, &config);
 
         // THEN
-        let expected = String::from(" done ");
+        let expected = String::from("[[fertig]]");
 
         assert_eq!(got_at_min_25, expected);
         assert_eq!(got_at_min_26, expected);

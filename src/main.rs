@@ -40,6 +40,14 @@ struct Args {
     #[arg(short = 'n', long = "num-blocks", value_name = "NUM")]
     #[clap(default_value_t = tomo::DEFAULT_NUM_BLOCKS)]
     num_blocks: u8,
+    /// Message to show when timer is finished
+    #[arg(long = "finished-msg", value_name = "STRING")]
+    #[clap(default_value = tomo::DEFAULT_FINISHED_MSG)]
+    finished_msg: String,
+    /// Message to show when on a break
+    #[arg(long = "break-msg", value_name = "STRING")]
+    #[clap(default_value = tomo::DEFAULT_BREAK_MSG)]
+    break_msg: String,
 }
 
 #[derive(Subcommand, Debug, Clone)]
@@ -88,6 +96,8 @@ fn main() {
                 right_pad: args.right_pad,
                 delimiter: args.delimiter,
                 num_blocks: args.num_blocks,
+                finished_msg: args.finished_msg,
+                break_msg: args.break_msg,
             };
 
             tomo::show_progress(&data_file_path, now, &config)
