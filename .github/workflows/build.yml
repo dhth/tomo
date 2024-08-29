@@ -48,6 +48,8 @@ jobs:
           echo ""
           tomo break
           tomo --break-msg "break" -l "[[" -r "]]"
+          echo ""
           tomo stop
           tomo start -e 10
           tomo -p='⣀' -c='⣿' -n=20
+          echo ""
