@@ -90,7 +90,7 @@ fn main() {
                 num_blocks: args.num_blocks,
             };
 
-            tomo::show_progress(&data_file_path, now, config)
+            tomo::show_progress(&data_file_path, now, &config)
         }
         Some(Action::Start { elapsed_mins }) => {
             if elapsed_mins > ELAPSED_MINS_UPPER_LIMIT {

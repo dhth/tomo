@@ -39,14 +39,14 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install toolchain
         uses: dtolnay/rust-toolchain@stable
-      - name: Build
-        run: cargo build --release
+      - name: Install
+        run: cargo install --quiet --path .
       - name: Run
         run: |
-          ./target/release/tomo start
-          ./target/release/tomo
+          tomo start
+          tomo
           echo ""
-          ./target/release/tomo break
-          ./target/release/tomo stop
-          ./target/release/tomo start -e 10
-          ./target/release/tomo -p='⣀' -c='⣿' -n=20
+          tomo break
+          tomo stop
+          tomo start -e 10
+          tomo -p='⣀' -c='⣿' -n=20

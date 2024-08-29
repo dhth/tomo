@@ -12,6 +12,7 @@ pub const DEFAULT_DELIMITER: &str = "";
 pub const DEFAULT_NUM_BLOCKS: u8 = 10;
 
 pub const BREAK_STRING: &str = "break";
+pub const DONE_STRING: &str = "done";
 pub const STOP_STRING: &str = "stop";
 
 pub const BREAK_INDICATOR: &str = "\\o/";
@@ -53,7 +54,11 @@ pub fn stop_tracking(file_path: &PathBuf) -> Result<()> {
         .with_context(|| format!("couldn't write to file: `{:?}`", file_path))
 }
 
-pub fn show_progress(file_path: &PathBuf, now: DateTime<Utc>, config: DisplayConfig) -> Result<()> {
+pub fn show_progress(
+    file_path: &PathBuf,
+    now: DateTime<Utc>,
+    config: &DisplayConfig,
+) -> Result<()> {
     let status = fs::read_to_string(file_path)
         .with_context(|| format!("couldn't not read from file {:?}", file_path))?;
 
@@ -78,11 +83,11 @@ pub fn show_progress(file_path: &PathBuf, now: DateTime<Utc>, config: DisplayCon
     Ok(())
 }
 
-pub fn get_progress_bar(diff_seconds: i64, config: DisplayConfig) -> String {
-    let mut chunks = diff_seconds / (25 * 60 / (config.num_blocks as i64));
+pub fn get_progress_bar(diff_seconds: i64, config: &DisplayConfig) -> String {
+    let chunks = diff_seconds / (25 * 60 / (config.num_blocks as i64));
 
     if chunks >= config.num_blocks as i64 {
-        chunks = config.num_blocks as i64
+        return format!("{}{}{}", config.left_pad, DONE_STRING, config.right_pad,);
     }
 
     let mut bar = String::new();
@@ -100,6 +105,7 @@ pub fn get_progress_bar(diff_seconds: i64, config: DisplayConfig) -> String {
             bar.push_str(&config.delimiter);
         }
     }
+
     bar.push_str(&config.pending_block);
 
     format!("{}{}{}", config.left_pad, bar, config.right_pad,)
@@ -115,7 +121,7 @@ mod tests {
         let config = DisplayConfig::default();
 
         // WHEN
-        let got = get_progress_bar(10 * 60, config);
+        let got = get_progress_bar(10 * 60, &config);
 
         // THEN
         let expected = String::from(" ▪▪▪▪▫▫▫▫▫▫ ");
@@ -134,7 +140,7 @@ mod tests {
         };
 
         // WHEN
-        let got = get_progress_bar(0, config);
+        let got = get_progress_bar(0, &config);
 
         // THEN
         let expected = String::from("[▫▫▫▫▫▫▫▫▫▫]");
@@ -153,7 +159,7 @@ mod tests {
         };
 
         // WHEN
-        let got = get_progress_bar(18 * 60, config);
+        let got = get_progress_bar(18 * 60, &config);
 
         // THEN
         let expected = String::from(" +++++++--- ");
@@ -171,7 +177,7 @@ mod tests {
         };
 
         // WHEN
-        let got = get_progress_bar(10 * 60, config);
+        let got = get_progress_bar(10 * 60, &config);
 
         // THEN
         let expected = String::from(" ▪▪▫▫▫ ");
@@ -189,11 +195,43 @@ mod tests {
         };
 
         // WHEN
-        let got = get_progress_bar(10 * 60, config);
+        let got = get_progress_bar(10 * 60, &config);
 
         // THEN
         let expected = String::from(" ▪ ▪ ▪ ▪ ▫ ▫ ▫ ▫ ▫ ▫ ");
 
         assert_eq!(got, expected);
+    }
+
+    #[test]
+    fn get_progress_shows_empty_progress_bar() {
+        // GIVEN
+        let config = DisplayConfig::default();
+
+        // WHEN
+        let got_at_start = get_progress_bar(0, &config);
+        let got_at_min_one = get_progress_bar(1 * 60, &config);
+
+        // THEN
+        let expected = String::from(" ▫▫▫▫▫▫▫▫▫▫ ");
+
+        assert_eq!(got_at_start, expected);
+        assert_eq!(got_at_min_one, expected);
+    }
+
+    #[test]
+    fn get_progress_shows_done_string_when_timer_is_finished() {
+        // GIVEN
+        let config = DisplayConfig::default();
+
+        // WHEN
+        let got_at_min_25 = get_progress_bar(25 * 60, &config);
+        let got_at_min_26 = get_progress_bar(26 * 60, &config);
+
+        // THEN
+        let expected = String::from(" done ");
+
+        assert_eq!(got_at_min_25, expected);
+        assert_eq!(got_at_min_26, expected);
     }
 }
