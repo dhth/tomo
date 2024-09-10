@@ -9,7 +9,7 @@ homepage = "https://github.com/dhth/tomo"
 [dependencies]
 anyhow = "1.0.87"
 chrono = "0.4.38"
-clap = { version = "4.5.16", features = ["derive"] }
+clap = { version = "4.5.17", features = ["derive"] }
 dirs = "5.0.1"
 
 # The profile that 'cargo dist' will build with
