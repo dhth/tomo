@@ -1,16 +1,34 @@
 [package]
 name = "tomo"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2021"
 repository = "https://github.com/dhth/tomo"
 description = "tomo is a no-frills pomodoro progress indicator for tmux"
 homepage = "https://github.com/dhth/tomo"
+license = "MIT"
+keywords = [
+    "cli",
+    "pomodoro",
+    "time-tracking",
+]
+categories = [
+    "command-line-utilities",
+]
+exclude = [
+    ".github",
+    "docker-compose.yml",
+]
 
 [dependencies]
 anyhow = "1.0.89"
 chrono = "0.4.38"
 clap = { version = "4.5.18", features = ["derive"] }
 dirs = "5.0.1"
+
+[[bin]]
+name = "tomo"
+path = "src/main.rs"
+doc = false
 
 # The profile that 'cargo dist' will build with
 [profile.dist]
@@ -20,7 +38,7 @@ lto = "thin"
 # Config for 'cargo dist'
 [workspace.metadata.dist]
 # The preferred cargo-dist version to use in CI (Cargo.toml SemVer syntax)
-cargo-dist-version = "0.21.1"
+cargo-dist-version = "0.22.1"
 # CI backends to support
 ci = "github"
 # The installers to generate for each app
@@ -28,11 +46,15 @@ installers = ["shell", "homebrew"]
 # A GitHub repo to push Homebrew formulas to
 tap = "dhth/homebrew-tap"
 # Target platforms to build apps for (Rust target-triple syntax)
-targets = ["aarch64-apple-darwin", "x86_64-apple-darwin", "x86_64-unknown-linux-gnu", "x86_64-pc-windows-msvc"]
+targets = ["aarch64-apple-darwin", "x86_64-apple-darwin", "x86_64-unknown-linux-gnu"]
 # Path that installers should place binaries in
 install-path = "CARGO_HOME"
+# Plan jobs to run in CI
+plan-jobs = ["./release-packages-check"]
 # Publish jobs to run in CI
 publish-jobs = ["homebrew"]
+# Post-announce jobs to run in CI
+post-announce-jobs = ["./release-packages"]
 # Whether to install an updater program
 install-updater = false
 # Whether to enable GitHub Attestations

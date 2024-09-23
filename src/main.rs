@@ -1,14 +1,24 @@
+mod config;
+mod track;
+use std::ops::RangeInclusive;
 use std::process;
 
 use chrono::{Duration, Utc};
 use clap::{Parser, Subcommand};
+use config::{
+    DisplayConfig, DEFAULT_BREAK_MSG, DEFAULT_COMPLETE_BLOCK, DEFAULT_DELIMITER,
+    DEFAULT_FINISHED_MSG, DEFAULT_LEFT_PAD, DEFAULT_NUM_BLOCKS, DEFAULT_PENDING_BLOCK,
+    DEFAULT_RIGHT_PAD,
+};
 use dirs::data_dir;
 use std::fs;
 use std::path::PathBuf;
+use track::{show_progress, start_tracking, stop_tracking, take_break};
 
 const DATA_DIR: &str = "tomo";
 const DATA_FILE: &str = ".tomo";
 const ELAPSED_MINS_UPPER_LIMIT: u8 = 20;
+const NUM_BLOCKS_RANGE: RangeInclusive<u8> = 3..=100;
 
 /// tomo is a no-frills pomodoro progress indicator intended for tmux and similar terminal multiplexers
 #[derive(Parser, Debug)]
@@ -18,35 +28,35 @@ struct Args {
     action: Option<Action>,
     /// String to represent a "pending" block in the progress bar
     #[arg(short = 'p', long = "pending-block", value_name = "STRING")]
-    #[clap(default_value = tomo::DEFAULT_PENDING_BLOCK)]
+    #[clap(default_value = DEFAULT_PENDING_BLOCK)]
     pending_block: String,
     /// String to represent a "complete" block in the progress bar
     #[arg(short = 'c', long = "complete-block", value_name = "STRING")]
-    #[clap(default_value = tomo::DEFAULT_COMPLETE_BLOCK)]
+    #[clap(default_value = DEFAULT_COMPLETE_BLOCK)]
     complete_block: String,
     /// String to pad the output with on the LHS
     #[arg(short = 'l', long = "left-pad", value_name = "STRING")]
-    #[clap(default_value = tomo::DEFAULT_LEFT_PAD)]
+    #[clap(default_value = DEFAULT_LEFT_PAD)]
     left_pad: String,
     /// String to pad the output with on the RHS
     #[arg(short = 'r', long = "right-pad", value_name = "STRING")]
-    #[clap(default_value = tomo::DEFAULT_RIGHT_PAD)]
+    #[clap(default_value = DEFAULT_RIGHT_PAD)]
     right_pad: String,
     /// Delimiter between progress bar chunks
     #[arg(short = 'd', long = "delimiter", value_name = "STRING")]
-    #[clap(default_value = tomo::DEFAULT_DELIMITER)]
+    #[clap(default_value = DEFAULT_DELIMITER)]
     delimiter: String,
     /// Number of blocks to show in progress bar
     #[arg(short = 'n', long = "num-blocks", value_name = "NUM")]
-    #[clap(default_value_t = tomo::DEFAULT_NUM_BLOCKS)]
+    #[clap(default_value_t = DEFAULT_NUM_BLOCKS)]
     num_blocks: u8,
     /// Message to show when timer is finished
     #[arg(long = "finished-msg", value_name = "STRING")]
-    #[clap(default_value = tomo::DEFAULT_FINISHED_MSG)]
+    #[clap(default_value = DEFAULT_FINISHED_MSG)]
     finished_msg: String,
     /// Message to show when on a break
     #[arg(long = "break-msg", value_name = "STRING")]
-    #[clap(default_value = tomo::DEFAULT_BREAK_MSG)]
+    #[clap(default_value = DEFAULT_BREAK_MSG)]
     break_msg: String,
 }
 
@@ -68,7 +78,7 @@ enum Action {
 fn main() {
     let args = Args::parse();
 
-    if !(3..=100).contains(&args.num_blocks) {
+    if !(NUM_BLOCKS_RANGE).contains(&args.num_blocks) {
         eprintln!("Error: number of blocks needs to be between 3 and 100");
         process::exit(1);
     }
@@ -89,7 +99,7 @@ fn main() {
 
     let result = match args.action {
         None => {
-            let config = tomo::DisplayConfig {
+            let config = DisplayConfig {
                 pending_block: args.pending_block,
                 complete_block: args.complete_block,
                 left_pad: args.left_pad,
@@ -100,7 +110,7 @@ fn main() {
                 break_msg: args.break_msg,
             };
 
-            tomo::show_progress(&data_file_path, now, &config)
+            show_progress(&data_file_path, now, &config)
         }
         Some(Action::Start { elapsed_mins }) => {
             if elapsed_mins > ELAPSED_MINS_UPPER_LIMIT {
@@ -110,13 +120,13 @@ fn main() {
                 );
                 process::exit(1);
             }
-            tomo::start_tracking(
+            start_tracking(
                 &data_file_path,
                 now - Duration::minutes(elapsed_mins as i64),
             )
         }
-        Some(Action::Stop) => tomo::stop_tracking(&data_file_path),
-        Some(Action::Break) => tomo::take_break(&data_file_path),
+        Some(Action::Stop) => stop_tracking(&data_file_path),
+        Some(Action::Break) => take_break(&data_file_path),
     };
 
     if let Err(e) = result {
