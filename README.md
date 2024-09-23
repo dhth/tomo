@@ -1,12 +1,15 @@
 # tomo
 
+[![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/dhth/tomo/build.yml?style=flat-square)](https://github.com/dhth/tomo/actions)
+[![Crates.io Version](https://img.shields.io/crates/v/tomo?style=flat-square)](https://crates.io/crates/tomo)
+[![Latest Release](https://img.shields.io/github/release/dhth/tomo.svg?style=flat-square&label=github%20release)](https://github.com/dhth/tomo/releases/latest)
+[![Commits Since Latest Release](https://img.shields.io/github/commits-since/dhth/tomo/latest?style=flat-square)](https://github.com/dhth/tomo/releases)
+
 ✨ Overview
 ---
 
 `tomo` is a no-frills pomodoro progress indicator intended for tmux and similar
 terminal multiplexers.
-
-It is a port of [pomm](https://github.com/dhth/pomm).
 
 ⚡️ Usage
 ---
