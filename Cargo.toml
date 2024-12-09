@@ -20,7 +20,7 @@ exclude = [
 ]
 
 [dependencies]
-anyhow = "1.0.93"
+anyhow = "1.0.94"
 chrono = "0.4.38"
 clap = { version = "4.5.20", features = ["derive"] }
 dirs = "5.0.1"
