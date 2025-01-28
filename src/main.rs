@@ -1,15 +1,14 @@
+mod args;
+mod common;
 mod config;
 mod track;
 use std::ops::RangeInclusive;
-use std::process;
 
+use anyhow::Context;
+use args::{Action, Args};
 use chrono::{Duration, Utc};
-use clap::{Parser, Subcommand};
-use config::{
-    DisplayConfig, DEFAULT_BREAK_MSG, DEFAULT_COMPLETE_BLOCK, DEFAULT_DELIMITER,
-    DEFAULT_FINISHED_MSG, DEFAULT_LEFT_PAD, DEFAULT_NUM_BLOCKS, DEFAULT_PENDING_BLOCK,
-    DEFAULT_RIGHT_PAD,
-};
+use clap::Parser;
+use config::DisplayConfig;
 use dirs::data_dir;
 use std::fs;
 use std::path::PathBuf;
@@ -20,84 +19,32 @@ const DATA_FILE: &str = ".tomo";
 const ELAPSED_MINS_UPPER_LIMIT: u8 = 20;
 const NUM_BLOCKS_RANGE: RangeInclusive<u8> = 3..=100;
 
-/// tomo is a no-frills pomodoro progress indicator intended for tmux and similar terminal multiplexers
-#[derive(Parser, Debug)]
-#[command(about, long_about=None)]
-struct Args {
-    #[command(subcommand)]
-    action: Option<Action>,
-    /// String to represent a "pending" block in the progress bar
-    #[arg(short = 'p', long = "pending-block", value_name = "STRING")]
-    #[clap(default_value = DEFAULT_PENDING_BLOCK)]
-    pending_block: String,
-    /// String to represent a "complete" block in the progress bar
-    #[arg(short = 'c', long = "complete-block", value_name = "STRING")]
-    #[clap(default_value = DEFAULT_COMPLETE_BLOCK)]
-    complete_block: String,
-    /// String to pad the output with on the LHS
-    #[arg(short = 'l', long = "left-pad", value_name = "STRING")]
-    #[clap(default_value = DEFAULT_LEFT_PAD)]
-    left_pad: String,
-    /// String to pad the output with on the RHS
-    #[arg(short = 'r', long = "right-pad", value_name = "STRING")]
-    #[clap(default_value = DEFAULT_RIGHT_PAD)]
-    right_pad: String,
-    /// Delimiter between progress bar chunks
-    #[arg(short = 'd', long = "delimiter", value_name = "STRING")]
-    #[clap(default_value = DEFAULT_DELIMITER)]
-    delimiter: String,
-    /// Number of blocks to show in progress bar
-    #[arg(short = 'n', long = "num-blocks", value_name = "NUM")]
-    #[clap(default_value_t = DEFAULT_NUM_BLOCKS)]
-    num_blocks: u8,
-    /// Message to show when timer is finished
-    #[arg(long = "finished-msg", value_name = "STRING")]
-    #[clap(default_value = DEFAULT_FINISHED_MSG)]
-    finished_msg: String,
-    /// Message to show when on a break
-    #[arg(long = "break-msg", value_name = "STRING")]
-    #[clap(default_value = DEFAULT_BREAK_MSG)]
-    break_msg: String,
-}
-
-#[derive(Subcommand, Debug, Clone)]
-enum Action {
-    /// Start a pomodoro timer
-    Start {
-        /// Start tracking with n minutes already elapsed
-        #[arg(short = 'e', long = "elapsed-mins", value_name = "NUM")]
-        #[clap(default_value = "0")]
-        elapsed_mins: u8,
-    },
-    /// Stop timer
-    Stop,
-    /// Start a break
-    Break,
-}
-
-fn main() {
+fn main() -> anyhow::Result<()> {
     let args = Args::parse();
 
     if !(NUM_BLOCKS_RANGE).contains(&args.num_blocks) {
-        eprintln!("Error: number of blocks needs to be between 3 and 100");
-        process::exit(1);
+        return Err(anyhow::anyhow!(
+            "number of blocks needs to be between 3 and 100"
+        ));
     }
 
-    let user_data_dir = data_dir().unwrap_or(PathBuf::from("."));
-    let data_dir = user_data_dir.join(PathBuf::from(DATA_DIR));
+    let data_file_path = match args.data_file {
+        Some(f) => PathBuf::from(f),
+        None => {
+            let user_data_dir = data_dir().unwrap_or(PathBuf::from("."));
+            let data_dir = user_data_dir.join(PathBuf::from(DATA_DIR));
 
-    if !data_dir.exists() {
-        fs::create_dir_all(&data_dir).unwrap_or_else(|e| {
-            eprintln!("Error: could not create data directory {:?}", e);
-            process::exit(1);
-        });
-    }
+            if !data_dir.exists() {
+                fs::create_dir_all(&data_dir).context("could not create data directory")?;
+            }
 
-    let data_file_path = data_dir.join(PathBuf::from(DATA_FILE));
+            data_dir.join(PathBuf::from(DATA_FILE))
+        }
+    };
 
     let now = Utc::now();
 
-    let result = match args.action {
+    match args.action {
         None => {
             let config = DisplayConfig {
                 pending_block: args.pending_block,
@@ -114,11 +61,10 @@ fn main() {
         }
         Some(Action::Start { elapsed_mins }) => {
             if elapsed_mins > ELAPSED_MINS_UPPER_LIMIT {
-                eprintln!(
-                    "Error: elapsed mins cannot be greater than {}",
+                return Err(anyhow::anyhow!(
+                    "elapsed mins cannot be greater than {}",
                     ELAPSED_MINS_UPPER_LIMIT
-                );
-                process::exit(1);
+                ));
             }
             start_tracking(
                 &data_file_path,
@@ -127,10 +73,7 @@ fn main() {
         }
         Some(Action::Stop) => stop_tracking(&data_file_path),
         Some(Action::Break) => take_break(&data_file_path),
-    };
+    }?;
 
-    if let Err(e) = result {
-        eprintln!("Error: {:?}", e);
-        process::exit(1);
-    }
+    Ok(())
 }
