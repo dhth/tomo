@@ -1,14 +1,7 @@
-pub const DEFAULT_PENDING_BLOCK: &str = "▫";
-pub const DEFAULT_COMPLETE_BLOCK: &str = "▪";
-pub const DEFAULT_LEFT_PAD: &str = " ";
-pub const DEFAULT_RIGHT_PAD: &str = " ";
-pub const DEFAULT_DELIMITER: &str = "";
-pub const DEFAULT_NUM_BLOCKS: u8 = 10;
-pub const DEFAULT_FINISHED_MSG: &str = "done";
-pub const DEFAULT_BREAK_MSG: &str = "\\o/";
-
-pub const BREAK_STRING: &str = "break";
-pub const STOP_STRING: &str = "stop";
+use crate::common::{
+    DEFAULT_BREAK_MSG, DEFAULT_COMPLETE_BLOCK, DEFAULT_DELIMITER, DEFAULT_FINISHED_MSG,
+    DEFAULT_LEFT_PAD, DEFAULT_NUM_BLOCKS, DEFAULT_PENDING_BLOCK, DEFAULT_RIGHT_PAD,
+};
 
 pub struct DisplayConfig {
     pub pending_block: String,
@@ -24,14 +17,14 @@ pub struct DisplayConfig {
 impl Default for DisplayConfig {
     fn default() -> Self {
         DisplayConfig {
-            pending_block: DEFAULT_PENDING_BLOCK.to_string(),
-            complete_block: DEFAULT_COMPLETE_BLOCK.to_string(),
-            left_pad: DEFAULT_LEFT_PAD.to_string(),
-            right_pad: DEFAULT_RIGHT_PAD.to_string(),
-            delimiter: DEFAULT_DELIMITER.to_string(),
+            pending_block: DEFAULT_PENDING_BLOCK.into(),
+            complete_block: DEFAULT_COMPLETE_BLOCK.into(),
+            left_pad: DEFAULT_LEFT_PAD.into(),
+            right_pad: DEFAULT_RIGHT_PAD.into(),
+            delimiter: DEFAULT_DELIMITER.into(),
             num_blocks: DEFAULT_NUM_BLOCKS,
-            finished_msg: DEFAULT_FINISHED_MSG.to_string(),
-            break_msg: DEFAULT_BREAK_MSG.to_string(),
+            finished_msg: DEFAULT_FINISHED_MSG.into(),
+            break_msg: DEFAULT_BREAK_MSG.into(),
         }
     }
 }

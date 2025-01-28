@@ -1,32 +1,31 @@
-use crate::config::{DisplayConfig, BREAK_STRING, STOP_STRING};
-use anyhow::{Context, Result};
+use crate::config::DisplayConfig;
+use anyhow::Context;
 use chrono::prelude::*;
 use chrono::DateTime;
 use std::fs::{self};
 use std::path::PathBuf;
 
-pub fn start_tracking(file_path: &PathBuf, time: DateTime<Utc>) -> Result<()> {
-    fs::write(file_path, time.to_rfc3339())
-        .with_context(|| format!("could not write to file `{:?}`", file_path))
+const BREAK_STRING: &str = "break";
+const STOP_STRING: &str = "stop";
+
+pub fn start_tracking(file_path: &PathBuf, time: DateTime<Utc>) -> anyhow::Result<()> {
+    fs::write(file_path, time.to_rfc3339()).context("couldn't write to tomo's data file")
 }
 
-pub fn take_break(file_path: &PathBuf) -> Result<()> {
-    fs::write(file_path, BREAK_STRING)
-        .with_context(|| format!("couldn't write to file: `{:?}`", file_path))
+pub fn take_break(file_path: &PathBuf) -> anyhow::Result<()> {
+    fs::write(file_path, BREAK_STRING).context("couldn't write to tomo's data file")
 }
 
-pub fn stop_tracking(file_path: &PathBuf) -> Result<()> {
-    fs::write(file_path, STOP_STRING)
-        .with_context(|| format!("couldn't write to file: `{:?}`", file_path))
+pub fn stop_tracking(file_path: &PathBuf) -> Result<(), anyhow::Error> {
+    fs::write(file_path, STOP_STRING).context("couldn't write to tomo's data file")
 }
 
 pub fn show_progress(
     file_path: &PathBuf,
     now: DateTime<Utc>,
     config: &DisplayConfig,
-) -> Result<()> {
-    let status = fs::read_to_string(file_path)
-        .with_context(|| format!("couldn't not read from file {:?}", file_path))?;
+) -> anyhow::Result<()> {
+    let status = fs::read_to_string(file_path).context("couldn't read from tomo's data file")?;
 
     if status == STOP_STRING {
         return Ok(());
@@ -43,7 +42,7 @@ pub fn show_progress(
     let ts_trimmed = status.trim();
 
     let ts = DateTime::parse_from_rfc3339(ts_trimmed)
-        .with_context(|| "couldn't not parse time from tomo's data file {:?}")?;
+        .context("couldn't not parse time from tomo's data file")?;
 
     let diff_seconds = now.signed_duration_since(ts.to_utc()).num_seconds();
     let output = get_progress_bar(diff_seconds, config);
@@ -66,14 +65,14 @@ pub fn get_progress_bar(diff_seconds: i64, config: &DisplayConfig) -> String {
 
     for _ in 0..chunks {
         bar.push_str(&config.complete_block);
-        if config.delimiter.ne("") {
+        if !config.delimiter.is_empty() {
             bar.push_str(&config.delimiter);
         }
     }
 
     for _ in 0..((config.num_blocks as i64) - chunks - 1) {
         bar.push_str(&config.pending_block);
-        if config.delimiter.ne("") {
+        if !config.delimiter.is_empty() {
             bar.push_str(&config.delimiter);
         }
     }
@@ -182,7 +181,7 @@ mod tests {
 
         // WHEN
         let got_at_start = get_progress_bar(0, &config);
-        let got_at_min_one = get_progress_bar(1 * 60, &config);
+        let got_at_min_one = get_progress_bar(60, &config);
 
         // THEN
         let expected = String::from(" ▫▫▫▫▫▫▫▫▫▫ ");
