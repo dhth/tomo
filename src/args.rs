@@ -1,7 +1,4 @@
-use crate::common::{
-    DEFAULT_BREAK_MSG, DEFAULT_COMPLETE_BLOCK, DEFAULT_DELIMITER, DEFAULT_FINISHED_MSG,
-    DEFAULT_LEFT_PAD, DEFAULT_NUM_BLOCKS, DEFAULT_PENDING_BLOCK, DEFAULT_RIGHT_PAD,
-};
+use crate::common::*;
 use clap::{Parser, Subcommand};
 
 /// tomo is a no-frills pomodoro progress indicator intended for tmux and similar terminal multiplexers

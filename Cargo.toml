@@ -1,7 +1,7 @@
 [package]
 name = "tomo"
 version = "0.2.1"
-edition = "2021"
+edition = "2024"
 repository = "https://github.com/dhth/tomo"
 description = "tomo is a no-frills pomodoro progress indicator for tmux"
 homepage = "https://github.com/dhth/tomo"
@@ -20,9 +20,9 @@ exclude = [
 ]
 
 [dependencies]
-anyhow = "1.0.95"
-chrono = "0.4.39"
-clap = { version = "4.5.27", features = ["derive"] }
+anyhow = "1.0.97"
+chrono = "0.4.40"
+clap = { version = "4.5.31", features = ["derive"] }
 dirs = "6.0.0"
 
 [[bin]]
