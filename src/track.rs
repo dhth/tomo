@@ -1,7 +1,7 @@
 use crate::config::DisplayConfig;
 use anyhow::Context;
-use chrono::prelude::*;
 use chrono::DateTime;
+use chrono::prelude::*;
 use std::fs::{self};
 use std::path::PathBuf;
 
