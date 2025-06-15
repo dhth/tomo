@@ -1,9 +1,12 @@
-# tomo
-
-[![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/dhth/tomo/build.yml?style=flat-square)](https://github.com/dhth/tomo/actions)
-[![Crates.io Version](https://img.shields.io/crates/v/tomo?style=flat-square)](https://crates.io/crates/tomo)
-[![Latest Release](https://img.shields.io/github/release/dhth/tomo.svg?style=flat-square&label=github%20release)](https://github.com/dhth/tomo/releases/latest)
-[![Commits Since Latest Release](https://img.shields.io/github/commits-since/dhth/tomo/latest?style=flat-square)](https://github.com/dhth/tomo/releases)
+<p align="center">
+  <h1 align="center">tash</h1>
+  <p align="center">
+    <a href="https://github.com/dhth/tash/actions/workflows/main.yml"><img alt="Build status" src="https://img.shields.io/github/actions/workflow/status/dhth/tash/main.yml?style=flat-square"></a>
+    <a href="https://crates.io/crates/tash"><img alt="crates.io" src="https://img.shields.io/crates/v/tash?style=flat-square"></a>
+    <a href="https://github.com/dhth/tash/releases/latest"><img alt="Latest Release" src="https://img.shields.io/github/release/dhth/tash.svg?style=flat-square"></a>
+    <a href="https://github.com/dhth/tash/releases"><img alt="Commits Since Latest Release" src="https://img.shields.io/github/commits-since/dhth/tash/latest?style=flat-square"></a>
+  </p>
+</p>
 
 ✨ Overview
 ---
