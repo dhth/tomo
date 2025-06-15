@@ -19,4 +19,4 @@ jobs:
         env:
           CRATES_TOKEN: ${{ secrets.CRATES_TOKEN }}
         run: |
-          cargo publish --token ${CRATES_TOKEN}
+          cargo publish --token "${CRATES_TOKEN}"
