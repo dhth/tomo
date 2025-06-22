@@ -1,6 +1,6 @@
 use assert_cmd::Command;
 use pretty_assertions::assert_eq;
-use tempdir::TempDir;
+use tempfile::TempDir;
 
 struct TestFixture {
     _temp_dir: TempDir,
@@ -9,8 +9,7 @@ struct TestFixture {
 
 impl TestFixture {
     fn new() -> Self {
-        let temp_dir =
-            TempDir::new("tomo-integration-tests").expect("couldn't create temporary directory");
+        let temp_dir = TempDir::new().expect("couldn't create temporary directory");
         let data_file_path = temp_dir
             .path()
             .join(".tomo")
