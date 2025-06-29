@@ -30,10 +30,14 @@ name = "tomo"
 path = "src/main.rs"
 doc = false
 
+[profile.release]
+codegen-units = 1
+lto = "fat"
+strip = "symbols"
+
 # The profile that 'cargo dist' will build with
 [profile.dist]
 inherits = "release"
-lto = "thin"
 
 [dev-dependencies]
 assert_cmd = "2.0.17"

@@ -35,7 +35,7 @@ impl ExpectedSuccess for std::process::Output {
         }
 
         let stderr = std::str::from_utf8(&self.stderr).expect("invalid utf-8 stderr");
-        println!("{} stderr: \n{}", context, stderr);
+        println!("{context} stderr: \n{stderr}");
     }
 }
 
@@ -51,7 +51,7 @@ impl ExpectedFailure for std::process::Output {
         }
 
         let stdout = std::str::from_utf8(&self.stdout).expect("invalid utf-8 stdout");
-        println!("{} stdout: \n{}", context, stdout);
+        println!("{context} stdout: \n{stdout}");
     }
 }
 
@@ -371,7 +371,7 @@ fn stopping_a_timer_works() {
 
     if !stop_output.status.success() {
         let stderr = String::from_utf8(stop_output.stderr).expect("invalid utf-8 stderr");
-        println!("stop stderr: \n{}", stderr);
+        println!("stop stderr: \n{stderr}");
     }
     assert!(stop_output.status.success());
 

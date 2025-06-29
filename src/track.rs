@@ -46,7 +46,7 @@ pub fn show_progress(
 
     let diff_seconds = now.signed_duration_since(ts.to_utc()).num_seconds();
     let output = get_progress_bar(diff_seconds, config);
-    println!("{}", output);
+    println!("{output}");
 
     Ok(())
 }
