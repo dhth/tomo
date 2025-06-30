@@ -15,6 +15,7 @@ jobs:
       code: ${{ steps.filter.outputs.code }}
       deps: ${{ steps.filter.outputs.deps }}
       release: ${{ steps.filter.outputs.release }}
+      rust: ${{ steps.filter.outputs.rust }}
       workflows: ${{ steps.filter.outputs.workflows }}
       yml: ${{ steps.filter.outputs.yml }}
     steps:
@@ -41,6 +42,8 @@ jobs:
               - dist-workspace.toml
               - ".github/workflows/release.yml"
               - ".github/workflows/pr.yml"
+            rust:
+              - "**/*.rs"
             workflows:
               - ".github/**/*.yml"
             yml:
@@ -87,8 +90,14 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install toolchain
         uses: actions-rust-lang/setup-rust-toolchain@v1
-      - name: Build
-        run: cargo test
+      - name: Install nextest
+        uses: taiki-e/install-action@a27ef18d36cfa66b0af3a360104621793b41c036 # v2.54.3
+        with:
+          tool: cargo-nextest
+      - name: Run tests
+        env:
+          RUST_BACKTRACE: 0
+        run: cargo nextest run
 
   lint-yaml:
     needs: changes
@@ -123,7 +132,7 @@ jobs:
 
   dstlled-diff:
     needs: changes
-    if: ${{ needs.changes.outputs.code == 'true' }}
+    if: ${{ needs.changes.outputs.rust == 'true' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
