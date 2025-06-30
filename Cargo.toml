@@ -19,16 +19,25 @@ exclude = [
     "docker-compose.yml",
 ]
 
+[[bin]]
+name = "tomo"
+path = "src/main.rs"
+doc = false
+
 [dependencies]
 anyhow = "1.0.98"
 chrono = "0.4.41"
 clap = { version = "4.5.40", features = ["derive"] }
 dirs = "6.0.0"
 
-[[bin]]
-name = "tomo"
-path = "src/main.rs"
-doc = false
+[dev-dependencies]
+insta = "1.43.1"
+insta-cmd = "0.6.0"
+tempfile = "3.20.0"
+
+[profile.dev.package]
+insta.opt-level = 3
+similar.opt-level = 3
 
 [profile.release]
 codegen-units = 1
@@ -38,8 +47,3 @@ strip = "symbols"
 # The profile that 'cargo dist' will build with
 [profile.dist]
 inherits = "release"
-
-[dev-dependencies]
-assert_cmd = "2.0.17"
-pretty_assertions = "1.4.1"
-tempfile = "3.20.0"

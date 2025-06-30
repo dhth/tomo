@@ -85,6 +85,7 @@ pub fn get_progress_bar(diff_seconds: i64, config: &DisplayConfig) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use insta::assert_snapshot;
 
     #[test]
     fn get_progress_works_with_defaults() {
@@ -95,9 +96,7 @@ mod tests {
         let got = get_progress_bar(10 * 60, &config);
 
         // THEN
-        let expected = String::from(" ▪▪▪▪▫▫▫▫▫▫ ");
-
-        assert_eq!(got, expected);
+        assert_snapshot!(got, @" ▪▪▪▪▫▫▫▫▫▫");
     }
 
     #[test]
@@ -114,9 +113,7 @@ mod tests {
         let got = get_progress_bar(0, &config);
 
         // THEN
-        let expected = String::from("[▫▫▫▫▫▫▫▫▫▫]");
-
-        assert_eq!(got, expected);
+        insta::assert_snapshot!(got, @"[▫▫▫▫▫▫▫▫▫▫]");
     }
 
     #[test]
@@ -133,9 +130,7 @@ mod tests {
         let got = get_progress_bar(18 * 60, &config);
 
         // THEN
-        let expected = String::from(" +++++++--- ");
-
-        assert_eq!(got, expected);
+        insta::assert_snapshot!(got, @" +++++++---");
     }
 
     #[test]
@@ -151,9 +146,7 @@ mod tests {
         let got = get_progress_bar(10 * 60, &config);
 
         // THEN
-        let expected = String::from(" ▪▪▫▫▫ ");
-
-        assert_eq!(got, expected);
+        insta::assert_snapshot!(got, @" ▪▪▫▫▫");
     }
 
     #[test]
@@ -169,9 +162,7 @@ mod tests {
         let got = get_progress_bar(10 * 60, &config);
 
         // THEN
-        let expected = String::from(" ▪ ▪ ▪ ▪ ▫ ▫ ▫ ▫ ▫ ▫ ");
-
-        assert_eq!(got, expected);
+        insta::assert_snapshot!(got, @" ▪ ▪ ▪ ▪ ▫ ▫ ▫ ▫ ▫ ▫");
     }
 
     #[test]
@@ -184,10 +175,8 @@ mod tests {
         let got_at_min_one = get_progress_bar(60, &config);
 
         // THEN
-        let expected = String::from(" ▫▫▫▫▫▫▫▫▫▫ ");
-
-        assert_eq!(got_at_start, expected);
-        assert_eq!(got_at_min_one, expected);
+        insta::assert_snapshot!(got_at_start, @" ▫▫▫▫▫▫▫▫▫▫");
+        insta::assert_snapshot!(got_at_min_one, @" ▫▫▫▫▫▫▫▫▫▫");
     }
 
     #[test]
@@ -206,9 +195,7 @@ mod tests {
         let got_at_min_26 = get_progress_bar(26 * 60, &config);
 
         // THEN
-        let expected = String::from("[[fertig]]");
-
-        assert_eq!(got_at_min_25, expected);
-        assert_eq!(got_at_min_26, expected);
+        insta::assert_snapshot!(got_at_min_25, @"[[fertig]]");
+        insta::assert_snapshot!(got_at_min_26, @"[[fertig]]");
     }
 }

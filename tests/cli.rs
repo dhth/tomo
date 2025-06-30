@@ -1,6 +1,12 @@
-use assert_cmd::Command;
-use pretty_assertions::assert_eq;
 use tempfile::TempDir;
+
+use std::process::Command;
+
+use insta_cmd::{assert_cmd_snapshot, get_cargo_bin};
+
+fn base_command() -> Command {
+    Command::new(get_cargo_bin("tomo"))
+}
 
 struct TestFixture {
     _temp_dir: TempDir,
@@ -23,395 +29,467 @@ impl TestFixture {
     }
 }
 
-#[allow(dead_code)]
-trait ExpectedSuccess {
-    fn print_stderr_if_failed(&self, context: &str);
-}
-
-impl ExpectedSuccess for std::process::Output {
-    fn print_stderr_if_failed(&self, context: &str) {
-        if self.status.success() {
-            return;
-        }
-
-        let stderr = std::str::from_utf8(&self.stderr).expect("invalid utf-8 stderr");
-        println!("{context} stderr: \n{stderr}");
-    }
-}
-
-#[allow(dead_code)]
-trait ExpectedFailure {
-    fn print_stdout_if_succeeded(&self, context: &str);
-}
-
-impl ExpectedFailure for std::process::Output {
-    fn print_stdout_if_succeeded(&self, context: &str) {
-        if !self.status.success() {
-            return;
-        }
-
-        let stdout = std::str::from_utf8(&self.stdout).expect("invalid utf-8 stdout");
-        println!("{context} stdout: \n{stdout}");
-    }
-}
-
 // SUCCESSES
 #[test]
 fn shows_help() {
     // GIVEN
     // WHEN
-    let mut cmd = Command::cargo_bin(env!("CARGO_PKG_NAME")).unwrap();
-    cmd.arg("--help");
-    let output = cmd.output().expect("running command failed");
+    let mut base_cmd = base_command();
+    let mut cmd = base_cmd.args(["--help"]);
 
     // THEN
-    assert!(output.status.success());
-    let stdout = String::from_utf8(output.stdout).expect("invalid utf-8 stdout");
-    assert!(stdout.contains("tomo is a no-frills pomodoro progress indicator for tmux"));
+    assert_cmd_snapshot!(cmd, @r#"
+    success: true
+    exit_code: 0
+    ----- stdout -----
+    tomo is a no-frills pomodoro progress indicator for tmux
+
+    Usage: tomo [OPTIONS] [COMMAND]
+
+    Commands:
+      start  Start a pomodoro timer
+      stop   Stop timer
+      break  Start a break
+      help   Print this message or the help of the given subcommand(s)
+
+    Options:
+      -p, --pending-block <STRING>   String to represent a "pending" block in the progress bar [default: ▫]
+      -c, --complete-block <STRING>  String to represent a "complete" block in the progress bar [default: ▪]
+      -l, --left-pad <STRING>        String to pad the output with on the LHS [default: " "]
+      -r, --right-pad <STRING>       String to pad the output with on the RHS [default: " "]
+      -d, --delimiter <STRING>       Delimiter between progress bar chunks [default: ]
+      -n, --num-blocks <NUM>         Number of blocks to show in progress bar [default: 10]
+          --finished-msg <STRING>    Message to show when timer is finished [default: done]
+          --break-msg <STRING>       Message to show when on a break [default: \o/]
+          --data-file <STRING>       tomo's data file (defaults to <YOUR_DATA_DIR>/tomo/.tomo)
+      -h, --help                     Print help
+
+    ----- stderr -----
+    "#);
 }
 
 #[test]
 fn starting_timer_works() {
     // GIVEN
     let fixture = TestFixture::new();
-    let data_file_flag = format!("--data-file={}", fixture.data_file_path.as_str());
 
     // WHEN
-    let mut start_cmd = Command::cargo_bin(env!("CARGO_PKG_NAME")).unwrap();
-    start_cmd.arg("start");
-    start_cmd.arg(&data_file_flag);
-    let start_output = start_cmd.output().expect("running command failed");
-
-    let mut show_cmd = Command::cargo_bin(env!("CARGO_PKG_NAME")).unwrap();
-    show_cmd.arg(&data_file_flag);
-    let show_output = show_cmd.output().expect("running command failed");
-
     // THEN
-    start_output.print_stderr_if_failed("start");
-    assert!(start_output.status.success());
+    let mut base_cmd = base_command();
+    let mut start_cmd = base_cmd.args(["--data-file", fixture.data_file_path.as_str(), "start"]);
+    assert_cmd_snapshot!(start_cmd, @r"
+    success: true
+    exit_code: 0
+    ----- stdout -----
 
-    show_output.print_stderr_if_failed("show");
-    assert!(show_output.status.success());
-    let show_stdout = String::from_utf8(show_output.stdout).expect("invalid utf-8 stdout");
-    assert_eq!(show_stdout, " ▫▫▫▫▫▫▫▫▫▫ \n");
+    ----- stderr -----
+    ");
+
+    let mut base_show_cmd = base_command();
+    let mut show_cmd = base_show_cmd.args(["--data-file", fixture.data_file_path.as_str()]);
+    assert_cmd_snapshot!(show_cmd, @r"
+    success: true
+    exit_code: 0
+    ----- stdout -----
+     ▫▫▫▫▫▫▫▫▫▫ 
+
+    ----- stderr -----
+    ");
 }
 
 #[test]
 fn starting_timer_with_elapsed_time_works() {
     // GIVEN
     let fixture = TestFixture::new();
-    let data_file_flag = format!("--data-file={}", fixture.data_file_path.as_str());
 
     // WHEN
-    let mut start_cmd = Command::cargo_bin(env!("CARGO_PKG_NAME")).unwrap();
-    start_cmd.arg("start");
-    start_cmd.arg("-e=8");
-    start_cmd.arg(&data_file_flag);
-    let start_output = start_cmd.output().expect("running command failed");
-
-    let mut show_cmd = Command::cargo_bin(env!("CARGO_PKG_NAME")).unwrap();
-    show_cmd.arg(&data_file_flag);
-    let show_output = show_cmd.output().expect("running command failed");
-
     // THEN
-    start_output.print_stderr_if_failed("start");
-    assert!(start_output.status.success());
+    let mut base_cmd = base_command();
+    let mut start_cmd = base_cmd.args([
+        "start",
+        "--elapsed-mins",
+        "8",
+        "--data-file",
+        fixture.data_file_path.as_str(),
+    ]);
+    assert_cmd_snapshot!(start_cmd, @r"
+    success: true
+    exit_code: 0
+    ----- stdout -----
 
-    show_output.print_stderr_if_failed("show");
-    assert!(show_output.status.success());
-    let show_stdout = String::from_utf8(show_output.stdout).expect("invalid utf-8 stdout");
-    assert_eq!(show_stdout, " ▪▪▪▫▫▫▫▫▫▫ \n");
+    ----- stderr -----
+    ");
+
+    let mut base_show_cmd = base_command();
+    let mut show_cmd = base_show_cmd.args(["--data-file", fixture.data_file_path.as_str()]);
+    assert_cmd_snapshot!(show_cmd, @r"
+    success: true
+    exit_code: 0
+    ----- stdout -----
+     ▪▪▪▫▫▫▫▫▫▫ 
+
+    ----- stderr -----
+    ");
 }
 
 #[test]
 fn using_custom_delimiter_works() {
     // GIVEN
     let fixture = TestFixture::new();
-    let data_file_flag = format!("--data-file={}", fixture.data_file_path.as_str());
+    let mut base_cmd = base_command();
 
     // WHEN
-    let mut start_cmd = Command::cargo_bin(env!("CARGO_PKG_NAME")).unwrap();
-    start_cmd.arg("start");
-    start_cmd.arg(&data_file_flag);
-    let start_output = start_cmd.output().expect("running command failed");
-
-    let mut show_cmd = Command::cargo_bin(env!("CARGO_PKG_NAME")).unwrap();
-    show_cmd.arg("-d= ");
-    show_cmd.arg(&data_file_flag);
-    let show_output = show_cmd.output().expect("running command failed");
-
     // THEN
-    start_output.print_stderr_if_failed("start");
-    assert!(start_output.status.success());
+    let mut start_cmd = base_cmd.args(["start", "--data-file", fixture.data_file_path.as_str()]);
+    assert_cmd_snapshot!(start_cmd, @r"
+    success: true
+    exit_code: 0
+    ----- stdout -----
 
-    show_output.print_stderr_if_failed("show");
-    assert!(show_output.status.success());
-    let show_stdout = String::from_utf8(show_output.stdout).expect("invalid utf-8 stdout");
-    assert_eq!(show_stdout, " ▫ ▫ ▫ ▫ ▫ ▫ ▫ ▫ ▫ ▫ \n");
+    ----- stderr -----
+    ");
+
+    let mut base_show_cmd = base_command();
+    let mut show_cmd = base_show_cmd.args(["--delimiter", " ", "--data-file", fixture.data_file_path.as_str()]);
+    assert_cmd_snapshot!(show_cmd, @r"
+    success: true
+    exit_code: 0
+    ----- stdout -----
+     ▫ ▫ ▫ ▫ ▫ ▫ ▫ ▫ ▫ ▫ 
+
+    ----- stderr -----
+    ");
 }
 
 #[test]
 fn using_custom_num_blocks_works() {
     // GIVEN
     let fixture = TestFixture::new();
-    let data_file_flag = format!("--data-file={}", fixture.data_file_path.as_str());
+    let mut base_cmd = base_command();
 
     // WHEN
-    let mut start_cmd = Command::cargo_bin(env!("CARGO_PKG_NAME")).unwrap();
-    start_cmd.arg("start");
-    start_cmd.arg("-e=12");
-    start_cmd.arg(&data_file_flag);
-    let start_output = start_cmd.output().expect("running command failed");
-
-    let mut show_cmd = Command::cargo_bin(env!("CARGO_PKG_NAME")).unwrap();
-    show_cmd.arg(&data_file_flag);
-    show_cmd.arg("-n=5");
-    let show_output = show_cmd.output().expect("running command failed");
-
     // THEN
-    start_output.print_stderr_if_failed("start");
-    assert!(start_output.status.success());
+    let mut start_cmd = base_cmd.args([
+        "start",
+        "--elapsed-mins",
+        "12",
+        "--data-file",
+        fixture.data_file_path.as_str(),
+    ]);
+    assert_cmd_snapshot!(start_cmd, @r"
+    success: true
+    exit_code: 0
+    ----- stdout -----
 
-    show_output.print_stderr_if_failed("show");
-    assert!(show_output.status.success());
-    let show_stdout = String::from_utf8(show_output.stdout).expect("invalid utf-8 stdout");
-    assert_eq!(show_stdout, " ▪▪▫▫▫ \n");
+    ----- stderr -----
+    ");
+
+    let mut base_show_cmd = base_command();
+    let mut show_cmd = base_show_cmd.args(["--num-blocks", "5", "--data-file", fixture.data_file_path.as_str()]);
+    assert_cmd_snapshot!(show_cmd, @r"
+    success: true
+    exit_code: 0
+    ----- stdout -----
+     ▪▪▫▫▫ 
+
+    ----- stderr -----
+    ");
 }
 
 #[test]
 fn using_custom_pending_block_works() {
     // GIVEN
     let fixture = TestFixture::new();
-    let data_file_flag = format!("--data-file={}", fixture.data_file_path.as_str());
+    let mut base_cmd = base_command();
 
     // WHEN
-    let mut start_cmd = Command::cargo_bin(env!("CARGO_PKG_NAME")).unwrap();
-    start_cmd.arg("start");
-    start_cmd.arg("-e=12");
-    start_cmd.arg(&data_file_flag);
-    let start_output = start_cmd.output().expect("running command failed");
-
-    let mut show_cmd = Command::cargo_bin(env!("CARGO_PKG_NAME")).unwrap();
-    show_cmd.arg(&data_file_flag);
-    show_cmd.arg("-p=.");
-    let show_output = show_cmd.output().expect("running command failed");
-
     // THEN
-    start_output.print_stderr_if_failed("start");
-    assert!(start_output.status.success());
+    let mut start_cmd = base_cmd.args([
+        "start",
+        "--elapsed-mins",
+        "12",
+        "--data-file",
+        fixture.data_file_path.as_str(),
+    ]);
+    assert_cmd_snapshot!(start_cmd, @r"
+    success: true
+    exit_code: 0
+    ----- stdout -----
 
-    show_output.print_stderr_if_failed("show");
-    assert!(show_output.status.success());
-    let show_stdout = String::from_utf8(show_output.stdout).expect("invalid utf-8 stdout");
-    assert_eq!(show_stdout, " ▪▪▪▪...... \n");
+    ----- stderr -----
+    ");
+
+    let mut base_show_cmd = base_command();
+    let mut show_cmd = base_show_cmd.args(["--pending-block", ".", "--data-file", fixture.data_file_path.as_str()]);
+    assert_cmd_snapshot!(show_cmd, @r"
+    success: true
+    exit_code: 0
+    ----- stdout -----
+     ▪▪▪▪...... 
+
+    ----- stderr -----
+    ");
 }
 
 #[test]
 fn using_custom_complete_block_works() {
     // GIVEN
     let fixture = TestFixture::new();
-    let data_file_flag = format!("--data-file={}", fixture.data_file_path.as_str());
+    let mut base_cmd = base_command();
 
     // WHEN
-    let mut start_cmd = Command::cargo_bin(env!("CARGO_PKG_NAME")).unwrap();
-    start_cmd.arg("start");
-    start_cmd.arg("-e=12");
-    start_cmd.arg(&data_file_flag);
-    let start_output = start_cmd.output().expect("running command failed");
-
-    let mut show_cmd = Command::cargo_bin(env!("CARGO_PKG_NAME")).unwrap();
-    show_cmd.arg(&data_file_flag);
-    show_cmd.arg("-c=x");
-    let show_output = show_cmd.output().expect("running command failed");
-
     // THEN
-    start_output.print_stderr_if_failed("start");
-    assert!(start_output.status.success());
+    let mut start_cmd = base_cmd.args([
+        "start",
+        "--elapsed-mins",
+        "12",
+        "--data-file",
+        fixture.data_file_path.as_str(),
+    ]);
+    assert_cmd_snapshot!(start_cmd, @r"
+    success: true
+    exit_code: 0
+    ----- stdout -----
 
-    show_output.print_stderr_if_failed("show");
-    assert!(show_output.status.success());
-    let show_stdout = String::from_utf8(show_output.stdout).expect("invalid utf-8 stdout");
-    assert_eq!(show_stdout, " xxxx▫▫▫▫▫▫ \n");
+    ----- stderr -----
+    ");
+
+    let mut base_show_cmd = base_command();
+    let mut show_cmd = base_show_cmd.args(["--complete-block", "x", "--data-file", fixture.data_file_path.as_str()]);
+    assert_cmd_snapshot!(show_cmd, @r"
+    success: true
+    exit_code: 0
+    ----- stdout -----
+     xxxx▫▫▫▫▫▫ 
+
+    ----- stderr -----
+    ");
 }
 
 #[test]
 fn using_custom_left_pad_works() {
     // GIVEN
     let fixture = TestFixture::new();
-    let data_file_flag = format!("--data-file={}", fixture.data_file_path.as_str());
+    let mut base_cmd = base_command();
 
     // WHEN
-    let mut start_cmd = Command::cargo_bin(env!("CARGO_PKG_NAME")).unwrap();
-    start_cmd.arg("start");
-    start_cmd.arg("-e=12");
-    start_cmd.arg(&data_file_flag);
-    let start_output = start_cmd.output().expect("running command failed");
-
-    let mut show_cmd = Command::cargo_bin(env!("CARGO_PKG_NAME")).unwrap();
-    show_cmd.arg(&data_file_flag);
-    show_cmd.arg("-l=[");
-    let show_output = show_cmd.output().expect("running command failed");
-
     // THEN
-    start_output.print_stderr_if_failed("start");
-    assert!(start_output.status.success());
+    let mut start_cmd = base_cmd.args([
+        "start",
+        "--elapsed-mins",
+        "12",
+        "--data-file",
+        fixture.data_file_path.as_str(),
+    ]);
+    assert_cmd_snapshot!(start_cmd, @r"
+    success: true
+    exit_code: 0
+    ----- stdout -----
 
-    show_output.print_stderr_if_failed("show");
-    assert!(show_output.status.success());
-    let show_stdout = String::from_utf8(show_output.stdout).expect("invalid utf-8 stdout");
-    assert_eq!(show_stdout, "[▪▪▪▪▫▫▫▫▫▫ \n");
+    ----- stderr -----
+    ");
+
+    let mut base_show_cmd = base_command();
+    let mut show_cmd = base_show_cmd.args(["--left-pad", "[", "--data-file", fixture.data_file_path.as_str()]);
+    assert_cmd_snapshot!(show_cmd, @r"
+    success: true
+    exit_code: 0
+    ----- stdout -----
+    [▪▪▪▪▫▫▫▫▫▫ 
+
+    ----- stderr -----
+    ");
 }
 
 #[test]
 fn using_custom_right_pad_works() {
     // GIVEN
     let fixture = TestFixture::new();
-    let data_file_flag = format!("--data-file={}", fixture.data_file_path.as_str());
+    let mut base_cmd = base_command();
 
     // WHEN
-    let mut start_cmd = Command::cargo_bin(env!("CARGO_PKG_NAME")).unwrap();
-    start_cmd.arg("start");
-    start_cmd.arg("-e=12");
-    start_cmd.arg(&data_file_flag);
-    let start_output = start_cmd.output().expect("running command failed");
-
-    let mut show_cmd = Command::cargo_bin(env!("CARGO_PKG_NAME")).unwrap();
-    show_cmd.arg(&data_file_flag);
-    show_cmd.arg("-r=]");
-    let show_output = show_cmd.output().expect("running command failed");
-
     // THEN
-    start_output.print_stderr_if_failed("start");
-    assert!(start_output.status.success());
+    let mut start_cmd = base_cmd.args([
+        "start",
+        "--elapsed-mins",
+        "12",
+        "--data-file",
+        fixture.data_file_path.as_str(),
+    ]);
+    assert_cmd_snapshot!(start_cmd, @r"
+    success: true
+    exit_code: 0
+    ----- stdout -----
 
-    show_output.print_stderr_if_failed("show");
-    assert!(show_output.status.success());
-    let show_stdout = String::from_utf8(show_output.stdout).expect("invalid utf-8 stdout");
-    assert_eq!(show_stdout, " ▪▪▪▪▫▫▫▫▫▫]\n");
+    ----- stderr -----
+    ");
+
+    let mut base_show_cmd = base_command();
+    let mut show_cmd = base_show_cmd.args(["--right-pad", "]", "--data-file", fixture.data_file_path.as_str()]);
+    assert_cmd_snapshot!(show_cmd, @r"
+    success: true
+    exit_code: 0
+    ----- stdout -----
+     ▪▪▪▪▫▫▫▫▫▫]
+
+    ----- stderr -----
+    ");
 }
 
 #[test]
 fn starting_a_break_works() {
     // GIVEN
     let fixture = TestFixture::new();
-    let data_file_flag = format!("--data-file={}", fixture.data_file_path.as_str());
+    let mut base_cmd = base_command();
 
     // WHEN
-    let mut break_cmd = Command::cargo_bin(env!("CARGO_PKG_NAME")).unwrap();
-    break_cmd.arg("break");
-    break_cmd.arg(&data_file_flag);
-    let start_output = break_cmd.output().expect("running command failed");
-
-    let mut show_cmd = Command::cargo_bin(env!("CARGO_PKG_NAME")).unwrap();
-    show_cmd.arg(&data_file_flag);
-    let show_output = show_cmd.output().expect("running command failed");
-
     // THEN
-    start_output.print_stderr_if_failed("start");
-    assert!(start_output.status.success());
+    let mut break_cmd = base_cmd.args(["break", "--data-file", fixture.data_file_path.as_str()]);
+    assert_cmd_snapshot!(break_cmd, @r"
+    success: true
+    exit_code: 0
+    ----- stdout -----
 
-    show_output.print_stderr_if_failed("show");
-    assert!(show_output.status.success());
-    let show_stdout = String::from_utf8(show_output.stdout).expect("invalid utf-8 stdout");
-    assert_eq!(show_stdout, " \\o/ ");
+    ----- stderr -----
+    ");
+
+    let mut base_show_cmd = base_command();
+    let mut show_cmd = base_show_cmd.args(["--data-file", fixture.data_file_path.as_str()]);
+    assert_cmd_snapshot!(show_cmd, @r"
+    success: true
+    exit_code: 0
+    ----- stdout -----
+     \o/ 
+    ----- stderr -----
+    ");
 }
 
 #[test]
 fn using_a_custom_break_message_works() {
     // GIVEN
     let fixture = TestFixture::new();
-    let data_file_flag = format!("--data-file={}", fixture.data_file_path.as_str());
+    let mut base_cmd = base_command();
 
     // WHEN
-    let mut break_cmd = Command::cargo_bin(env!("CARGO_PKG_NAME")).unwrap();
-    break_cmd.arg("break");
-    break_cmd.arg(&data_file_flag);
-    let start_output = break_cmd.output().expect("running command failed");
-
-    let mut show_cmd = Command::cargo_bin(env!("CARGO_PKG_NAME")).unwrap();
-    show_cmd.arg(&data_file_flag);
-    show_cmd.arg("--break-msg=done!");
-    let show_output = show_cmd.output().expect("running command failed");
-
     // THEN
-    start_output.print_stderr_if_failed("start");
-    assert!(start_output.status.success());
+    let mut break_cmd = base_cmd.args(["break", "--data-file", fixture.data_file_path.as_str()]);
+    assert_cmd_snapshot!(break_cmd, @r"
+    success: true
+    exit_code: 0
+    ----- stdout -----
 
-    show_output.print_stderr_if_failed("show");
-    assert!(show_output.status.success());
-    let show_stdout = String::from_utf8(show_output.stdout).expect("invalid utf-8 stdout");
-    assert_eq!(show_stdout, " done! ");
+    ----- stderr -----
+    ");
+
+    let mut base_show_cmd = base_command();
+    let mut show_cmd = base_show_cmd.args([
+        "--break-msg",
+        "done!",
+        "--data-file",
+        fixture.data_file_path.as_str(),
+    ]);
+    assert_cmd_snapshot!(show_cmd, @r"
+    success: true
+    exit_code: 0
+    ----- stdout -----
+     done! 
+    ----- stderr -----
+    ");
 }
 
 #[test]
 fn stopping_a_timer_works() {
     // GIVEN
     let fixture = TestFixture::new();
-    let data_file_flag = format!("--data-file={}", fixture.data_file_path.as_str());
+    let mut base_cmd = base_command();
 
     // WHEN
-    let mut start_cmd = Command::cargo_bin(env!("CARGO_PKG_NAME")).unwrap();
-    start_cmd.arg("start");
-    start_cmd.arg("-e=12");
-    start_cmd.arg(&data_file_flag);
-    let start_output = start_cmd.output().expect("running start command failed");
-
-    let mut stop_cmd = Command::cargo_bin(env!("CARGO_PKG_NAME")).unwrap();
-    stop_cmd.arg("break");
-    stop_cmd.arg(&data_file_flag);
-    let stop_output = stop_cmd.output().expect("running stop command failed");
-
-    let mut show_cmd = Command::cargo_bin(env!("CARGO_PKG_NAME")).unwrap();
-    show_cmd.arg(&data_file_flag);
-    let show_output = show_cmd.output().expect("running command failed");
-
     // THEN
-    start_output.print_stderr_if_failed("start");
-    assert!(start_output.status.success());
+    let mut start_cmd = base_cmd.args([
+        "start",
+        "--elapsed-mins",
+        "12",
+        "--data-file",
+        fixture.data_file_path.as_str(),
+    ]);
+    assert_cmd_snapshot!(start_cmd, @r"
+    success: true
+    exit_code: 0
+    ----- stdout -----
 
-    if !stop_output.status.success() {
-        let stderr = String::from_utf8(stop_output.stderr).expect("invalid utf-8 stderr");
-        println!("stop stderr: \n{stderr}");
-    }
-    assert!(stop_output.status.success());
+    ----- stderr -----
+    ");
 
-    show_output.print_stderr_if_failed("show");
-    assert!(show_output.status.success());
-    let show_stdout = String::from_utf8(show_output.stdout).expect("invalid utf-8 stdout");
-    assert_eq!(show_stdout, " \\o/ ");
+    let mut base_stop_cmd = base_command();
+    let mut stop_cmd =
+        base_stop_cmd.args(["break", "--data-file", fixture.data_file_path.as_str()]);
+    assert_cmd_snapshot!(stop_cmd, @r"
+    success: true
+    exit_code: 0
+    ----- stdout -----
+
+    ----- stderr -----
+    ");
+
+    let mut base_show_cmd = base_command();
+    let mut show_cmd = base_show_cmd.args(["--data-file", fixture.data_file_path.as_str()]);
+    assert_cmd_snapshot!(show_cmd, @r"
+    success: true
+    exit_code: 0
+    ----- stdout -----
+     \o/ 
+    ----- stderr -----
+    ");
 }
 
 #[test]
 fn using_multiple_flags_together_works() {
     // GIVEN
     let fixture = TestFixture::new();
-    let data_file_flag = format!("--data-file={}", fixture.data_file_path.as_str());
+    let mut base_cmd = base_command();
 
     // WHEN
-    let mut start_cmd = Command::cargo_bin(env!("CARGO_PKG_NAME")).unwrap();
-    start_cmd.arg("start");
-    start_cmd.arg("-e=12");
-    start_cmd.arg(&data_file_flag);
-    let start_output = start_cmd.output().expect("running command failed");
-
-    let mut show_cmd = Command::cargo_bin(env!("CARGO_PKG_NAME")).unwrap();
-    show_cmd.arg(&data_file_flag);
-    show_cmd.arg("-p=o");
-    show_cmd.arg("-c=x");
-    show_cmd.arg("-d=|");
-    show_cmd.arg("-l=[[ ");
-    show_cmd.arg("-r= ]]");
-    show_cmd.arg("-n=5");
-    let show_output = show_cmd.output().expect("running command failed");
-
     // THEN
-    start_output.print_stderr_if_failed("start");
-    assert!(start_output.status.success());
+    let mut start_cmd = base_cmd.args([
+        "start",
+        "--elapsed-mins",
+        "12",
+        "--data-file",
+        fixture.data_file_path.as_str(),
+    ]);
+    assert_cmd_snapshot!(start_cmd, @r"
+    success: true
+    exit_code: 0
+    ----- stdout -----
 
-    show_output.print_stderr_if_failed("show");
-    assert!(show_output.status.success());
-    let show_stdout = String::from_utf8(show_output.stdout).expect("invalid utf-8 stdout");
-    assert_eq!(show_stdout, "[[ x|x|o|o|o ]]\n");
+    ----- stderr -----
+    ");
+
+    let mut base_show_cmd = base_command();
+    let mut show_cmd = base_show_cmd.args([
+        "--pending-block",
+        "o",
+        "--complete-block",
+        "x",
+        "--delimiter",
+        "|",
+        "--left-pad",
+        "[[ ",
+        "--right-pad",
+        " ]]",
+        "--num-blocks",
+        "5",
+        "--data-file",
+        fixture.data_file_path.as_str(),
+    ]);
+    assert_cmd_snapshot!(show_cmd, @r"
+    success: true
+    exit_code: 0
+    ----- stdout -----
+    [[ x|x|o|o|o ]]
+
+    ----- stderr -----
+    ");
 }
 
 // FAILURES
@@ -419,72 +497,82 @@ fn using_multiple_flags_together_works() {
 fn fails_if_num_blocks_is_greater_than_threshold() {
     // GIVEN
     let fixture = TestFixture::new();
-    let data_file_flag = format!("--data-file={}", fixture.data_file_path.as_str());
+    let mut base_cmd = base_command();
 
     // WHEN
-    let mut start_cmd = Command::cargo_bin(env!("CARGO_PKG_NAME")).unwrap();
-    start_cmd.arg("start");
-    start_cmd.arg(&data_file_flag);
-    let start_output = start_cmd.output().expect("running command failed");
-
-    let mut show_cmd = Command::cargo_bin(env!("CARGO_PKG_NAME")).unwrap();
-    show_cmd.arg(&data_file_flag);
-    show_cmd.arg("-n=101");
-    let show_output = show_cmd.output().expect("running command failed");
-
     // THEN
-    start_output.print_stderr_if_failed("start");
-    assert!(start_output.status.success());
+    let mut start_cmd = base_cmd.args(["start", "--data-file", fixture.data_file_path.as_str()]);
+    assert_cmd_snapshot!(start_cmd, @r"
+    success: true
+    exit_code: 0
+    ----- stdout -----
 
-    show_output.print_stdout_if_succeeded("show");
-    assert!(!show_output.status.success());
-    let stderr = String::from_utf8(show_output.stderr).expect("invalid utf-8 stderr");
-    assert!(stderr.contains("Error: number of blocks needs to be between 3 and 100"));
+    ----- stderr -----
+    ");
+
+    let mut base_show_cmd = base_command();
+    let mut show_cmd =
+        base_show_cmd.args(["--num-blocks", "101", "--data-file", fixture.data_file_path.as_str()]);
+    assert_cmd_snapshot!(show_cmd, @r"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+
+    ----- stderr -----
+    Error: number of blocks needs to be between 3 and 100
+    ");
 }
 
 #[test]
 fn fails_if_num_blocks_is_less_than_threshold() {
     // GIVEN
     let fixture = TestFixture::new();
-    let data_file_flag = format!("--data-file={}", fixture.data_file_path.as_str());
+    let mut base_cmd = base_command();
 
     // WHEN
-    let mut start_cmd = Command::cargo_bin(env!("CARGO_PKG_NAME")).unwrap();
-    start_cmd.arg("start");
-    start_cmd.arg(&data_file_flag);
-    let start_output = start_cmd.output().expect("running command failed");
-
-    let mut show_cmd = Command::cargo_bin(env!("CARGO_PKG_NAME")).unwrap();
-    show_cmd.arg(&data_file_flag);
-    show_cmd.arg("-n=2");
-    let show_output = show_cmd.output().expect("running command failed");
-
     // THEN
-    start_output.print_stderr_if_failed("start");
-    assert!(start_output.status.success());
+    let mut start_cmd = base_cmd.args(["start", "--data-file", fixture.data_file_path.as_str()]);
+    assert_cmd_snapshot!(start_cmd, @r"
+    success: true
+    exit_code: 0
+    ----- stdout -----
 
-    show_output.print_stdout_if_succeeded("show");
-    assert!(!show_output.status.success());
-    let stderr = String::from_utf8(show_output.stderr).expect("invalid utf-8 stderr");
-    assert!(stderr.contains("number of blocks needs to be between 3 and 100"));
+    ----- stderr -----
+    ");
+
+    let mut base_show_cmd = base_command();
+    let mut show_cmd = base_show_cmd.args(["--num-blocks", "2", "--data-file", fixture.data_file_path.as_str()]);
+    assert_cmd_snapshot!(show_cmd, @r"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+
+    ----- stderr -----
+    Error: number of blocks needs to be between 3 and 100
+    ");
 }
 
 #[test]
 fn start_fails_if_elapsed_mins_is_greater_than_threshold() {
     // GIVEN
     let fixture = TestFixture::new();
-    let data_file_flag = format!("--data-file={}", fixture.data_file_path.as_str());
+    let mut base_cmd = base_command();
 
     // WHEN
-    let mut start_cmd = Command::cargo_bin(env!("CARGO_PKG_NAME")).unwrap();
-    start_cmd.arg("start");
-    start_cmd.arg("-e=21");
-    start_cmd.arg(&data_file_flag);
-    let start_output = start_cmd.output().expect("running command failed");
-
     // THEN
-    start_output.print_stdout_if_succeeded("show");
-    assert!(!start_output.status.success());
-    let stderr = String::from_utf8(start_output.stderr).expect("invalid utf-8 stderr");
-    assert!(stderr.contains("elapsed mins cannot be greater than 20"));
+    let mut start_cmd = base_cmd.args([
+        "start",
+        "--elapsed-mins",
+        "21",
+        "--data-file",
+        fixture.data_file_path.as_str(),
+    ]);
+    assert_cmd_snapshot!(start_cmd, @r"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+
+    ----- stderr -----
+    Error: elapsed mins cannot be greater than 20
+    ");
 }
