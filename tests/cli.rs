@@ -150,7 +150,12 @@ fn using_custom_delimiter_works() {
     ");
 
     let mut base_show_cmd = base_command();
-    let mut show_cmd = base_show_cmd.args(["--delimiter", " ", "--data-file", fixture.data_file_path.as_str()]);
+    let mut show_cmd = base_show_cmd.args([
+        "--delimiter",
+        " ",
+        "--data-file",
+        fixture.data_file_path.as_str(),
+    ]);
     assert_cmd_snapshot!(show_cmd, @r"
     success: true
     exit_code: 0
@@ -185,7 +190,12 @@ fn using_custom_num_blocks_works() {
     ");
 
     let mut base_show_cmd = base_command();
-    let mut show_cmd = base_show_cmd.args(["--num-blocks", "5", "--data-file", fixture.data_file_path.as_str()]);
+    let mut show_cmd = base_show_cmd.args([
+        "--num-blocks",
+        "5",
+        "--data-file",
+        fixture.data_file_path.as_str(),
+    ]);
     assert_cmd_snapshot!(show_cmd, @r"
     success: true
     exit_code: 0
@@ -220,7 +230,12 @@ fn using_custom_pending_block_works() {
     ");
 
     let mut base_show_cmd = base_command();
-    let mut show_cmd = base_show_cmd.args(["--pending-block", ".", "--data-file", fixture.data_file_path.as_str()]);
+    let mut show_cmd = base_show_cmd.args([
+        "--pending-block",
+        ".",
+        "--data-file",
+        fixture.data_file_path.as_str(),
+    ]);
     assert_cmd_snapshot!(show_cmd, @r"
     success: true
     exit_code: 0
@@ -255,7 +270,12 @@ fn using_custom_complete_block_works() {
     ");
 
     let mut base_show_cmd = base_command();
-    let mut show_cmd = base_show_cmd.args(["--complete-block", "x", "--data-file", fixture.data_file_path.as_str()]);
+    let mut show_cmd = base_show_cmd.args([
+        "--complete-block",
+        "x",
+        "--data-file",
+        fixture.data_file_path.as_str(),
+    ]);
     assert_cmd_snapshot!(show_cmd, @r"
     success: true
     exit_code: 0
@@ -290,7 +310,12 @@ fn using_custom_left_pad_works() {
     ");
 
     let mut base_show_cmd = base_command();
-    let mut show_cmd = base_show_cmd.args(["--left-pad", "[", "--data-file", fixture.data_file_path.as_str()]);
+    let mut show_cmd = base_show_cmd.args([
+        "--left-pad",
+        "[",
+        "--data-file",
+        fixture.data_file_path.as_str(),
+    ]);
     assert_cmd_snapshot!(show_cmd, @r"
     success: true
     exit_code: 0
@@ -325,7 +350,12 @@ fn using_custom_right_pad_works() {
     ");
 
     let mut base_show_cmd = base_command();
-    let mut show_cmd = base_show_cmd.args(["--right-pad", "]", "--data-file", fixture.data_file_path.as_str()]);
+    let mut show_cmd = base_show_cmd.args([
+        "--right-pad",
+        "]",
+        "--data-file",
+        fixture.data_file_path.as_str(),
+    ]);
     assert_cmd_snapshot!(show_cmd, @r"
     success: true
     exit_code: 0
@@ -511,8 +541,12 @@ fn fails_if_num_blocks_is_greater_than_threshold() {
     ");
 
     let mut base_show_cmd = base_command();
-    let mut show_cmd =
-        base_show_cmd.args(["--num-blocks", "101", "--data-file", fixture.data_file_path.as_str()]);
+    let mut show_cmd = base_show_cmd.args([
+        "--num-blocks",
+        "101",
+        "--data-file",
+        fixture.data_file_path.as_str(),
+    ]);
     assert_cmd_snapshot!(show_cmd, @r"
     success: false
     exit_code: 1
@@ -541,7 +575,12 @@ fn fails_if_num_blocks_is_less_than_threshold() {
     ");
 
     let mut base_show_cmd = base_command();
-    let mut show_cmd = base_show_cmd.args(["--num-blocks", "2", "--data-file", fixture.data_file_path.as_str()]);
+    let mut show_cmd = base_show_cmd.args([
+        "--num-blocks",
+        "2",
+        "--data-file",
+        fixture.data_file_path.as_str(),
+    ]);
     assert_cmd_snapshot!(show_cmd, @r"
     success: false
     exit_code: 1
