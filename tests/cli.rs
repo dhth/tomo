@@ -1,41 +1,15 @@
-use tempfile::TempDir;
+mod common;
 
-use std::process::Command;
-
-use insta_cmd::{assert_cmd_snapshot, get_cargo_bin};
-
-fn base_command() -> Command {
-    Command::new(get_cargo_bin("tomo"))
-}
-
-struct TestFixture {
-    _temp_dir: TempDir,
-    data_file_path: String,
-}
-
-impl TestFixture {
-    fn new() -> Self {
-        let temp_dir = TempDir::new().expect("couldn't create temporary directory");
-        let data_file_path = temp_dir
-            .path()
-            .join(".tomo")
-            .to_str()
-            .expect("temporary directory path is not valid utf-8")
-            .to_string();
-        Self {
-            _temp_dir: temp_dir,
-            data_file_path,
-        }
-    }
-}
+use common::Fixture;
+use insta_cmd::assert_cmd_snapshot;
 
 // SUCCESSES
 #[test]
 fn shows_help() {
     // GIVEN
     // WHEN
-    let mut base_cmd = base_command();
-    let mut cmd = base_cmd.args(["--help"]);
+    let fx = Fixture::new();
+    let mut cmd = fx.cmd(["--help"]);
 
     // THEN
     assert_cmd_snapshot!(cmd, @r#"
@@ -71,12 +45,11 @@ fn shows_help() {
 #[test]
 fn starting_timer_works() {
     // GIVEN
-    let fixture = TestFixture::new();
+    let fx = Fixture::new();
+    let mut start_cmd = fx.cmd(["start"]);
 
     // WHEN
     // THEN
-    let mut base_cmd = base_command();
-    let mut start_cmd = base_cmd.args(["--data-file", fixture.data_file_path.as_str(), "start"]);
     assert_cmd_snapshot!(start_cmd, @r"
     success: true
     exit_code: 0
@@ -85,8 +58,7 @@ fn starting_timer_works() {
     ----- stderr -----
     ");
 
-    let mut base_show_cmd = base_command();
-    let mut show_cmd = base_show_cmd.args(["--data-file", fixture.data_file_path.as_str()]);
+    let mut show_cmd = fx.base_cmd();
     assert_cmd_snapshot!(show_cmd, @r"
     success: true
     exit_code: 0
@@ -100,18 +72,11 @@ fn starting_timer_works() {
 #[test]
 fn starting_timer_with_elapsed_time_works() {
     // GIVEN
-    let fixture = TestFixture::new();
+    let fx = Fixture::new();
+    let mut start_cmd = fx.cmd(["start", "--elapsed-mins", "8"]);
 
     // WHEN
     // THEN
-    let mut base_cmd = base_command();
-    let mut start_cmd = base_cmd.args([
-        "start",
-        "--elapsed-mins",
-        "8",
-        "--data-file",
-        fixture.data_file_path.as_str(),
-    ]);
     assert_cmd_snapshot!(start_cmd, @r"
     success: true
     exit_code: 0
@@ -120,8 +85,7 @@ fn starting_timer_with_elapsed_time_works() {
     ----- stderr -----
     ");
 
-    let mut base_show_cmd = base_command();
-    let mut show_cmd = base_show_cmd.args(["--data-file", fixture.data_file_path.as_str()]);
+    let mut show_cmd = fx.base_cmd();
     assert_cmd_snapshot!(show_cmd, @r"
     success: true
     exit_code: 0
@@ -135,12 +99,11 @@ fn starting_timer_with_elapsed_time_works() {
 #[test]
 fn using_custom_delimiter_works() {
     // GIVEN
-    let fixture = TestFixture::new();
-    let mut base_cmd = base_command();
+    let fx = Fixture::new();
+    let mut start_cmd = fx.cmd(["start"]);
 
     // WHEN
     // THEN
-    let mut start_cmd = base_cmd.args(["start", "--data-file", fixture.data_file_path.as_str()]);
     assert_cmd_snapshot!(start_cmd, @r"
     success: true
     exit_code: 0
@@ -149,13 +112,7 @@ fn using_custom_delimiter_works() {
     ----- stderr -----
     ");
 
-    let mut base_show_cmd = base_command();
-    let mut show_cmd = base_show_cmd.args([
-        "--delimiter",
-        " ",
-        "--data-file",
-        fixture.data_file_path.as_str(),
-    ]);
+    let mut show_cmd = fx.cmd(["--delimiter", " "]);
     assert_cmd_snapshot!(show_cmd, @r"
     success: true
     exit_code: 0
@@ -169,18 +126,11 @@ fn using_custom_delimiter_works() {
 #[test]
 fn using_custom_num_blocks_works() {
     // GIVEN
-    let fixture = TestFixture::new();
-    let mut base_cmd = base_command();
+    let fx = Fixture::new();
+    let mut start_cmd = fx.cmd(["start", "--elapsed-mins", "12"]);
 
     // WHEN
     // THEN
-    let mut start_cmd = base_cmd.args([
-        "start",
-        "--elapsed-mins",
-        "12",
-        "--data-file",
-        fixture.data_file_path.as_str(),
-    ]);
     assert_cmd_snapshot!(start_cmd, @r"
     success: true
     exit_code: 0
@@ -189,13 +139,7 @@ fn using_custom_num_blocks_works() {
     ----- stderr -----
     ");
 
-    let mut base_show_cmd = base_command();
-    let mut show_cmd = base_show_cmd.args([
-        "--num-blocks",
-        "5",
-        "--data-file",
-        fixture.data_file_path.as_str(),
-    ]);
+    let mut show_cmd = fx.cmd(["--num-blocks", "5"]);
     assert_cmd_snapshot!(show_cmd, @r"
     success: true
     exit_code: 0
@@ -209,18 +153,11 @@ fn using_custom_num_blocks_works() {
 #[test]
 fn using_custom_pending_block_works() {
     // GIVEN
-    let fixture = TestFixture::new();
-    let mut base_cmd = base_command();
+    let fx = Fixture::new();
+    let mut start_cmd = fx.cmd(["start", "--elapsed-mins", "12"]);
 
     // WHEN
     // THEN
-    let mut start_cmd = base_cmd.args([
-        "start",
-        "--elapsed-mins",
-        "12",
-        "--data-file",
-        fixture.data_file_path.as_str(),
-    ]);
     assert_cmd_snapshot!(start_cmd, @r"
     success: true
     exit_code: 0
@@ -229,13 +166,7 @@ fn using_custom_pending_block_works() {
     ----- stderr -----
     ");
 
-    let mut base_show_cmd = base_command();
-    let mut show_cmd = base_show_cmd.args([
-        "--pending-block",
-        ".",
-        "--data-file",
-        fixture.data_file_path.as_str(),
-    ]);
+    let mut show_cmd = fx.cmd(["--pending-block", "."]);
     assert_cmd_snapshot!(show_cmd, @r"
     success: true
     exit_code: 0
@@ -249,18 +180,11 @@ fn using_custom_pending_block_works() {
 #[test]
 fn using_custom_complete_block_works() {
     // GIVEN
-    let fixture = TestFixture::new();
-    let mut base_cmd = base_command();
+    let fx = Fixture::new();
+    let mut start_cmd = fx.cmd(["start", "--elapsed-mins", "12"]);
 
     // WHEN
     // THEN
-    let mut start_cmd = base_cmd.args([
-        "start",
-        "--elapsed-mins",
-        "12",
-        "--data-file",
-        fixture.data_file_path.as_str(),
-    ]);
     assert_cmd_snapshot!(start_cmd, @r"
     success: true
     exit_code: 0
@@ -269,13 +193,7 @@ fn using_custom_complete_block_works() {
     ----- stderr -----
     ");
 
-    let mut base_show_cmd = base_command();
-    let mut show_cmd = base_show_cmd.args([
-        "--complete-block",
-        "x",
-        "--data-file",
-        fixture.data_file_path.as_str(),
-    ]);
+    let mut show_cmd = fx.cmd(["--complete-block", "x"]);
     assert_cmd_snapshot!(show_cmd, @r"
     success: true
     exit_code: 0
@@ -289,18 +207,11 @@ fn using_custom_complete_block_works() {
 #[test]
 fn using_custom_left_pad_works() {
     // GIVEN
-    let fixture = TestFixture::new();
-    let mut base_cmd = base_command();
+    let fx = Fixture::new();
+    let mut start_cmd = fx.cmd(["start", "--elapsed-mins", "12"]);
 
     // WHEN
     // THEN
-    let mut start_cmd = base_cmd.args([
-        "start",
-        "--elapsed-mins",
-        "12",
-        "--data-file",
-        fixture.data_file_path.as_str(),
-    ]);
     assert_cmd_snapshot!(start_cmd, @r"
     success: true
     exit_code: 0
@@ -309,13 +220,7 @@ fn using_custom_left_pad_works() {
     ----- stderr -----
     ");
 
-    let mut base_show_cmd = base_command();
-    let mut show_cmd = base_show_cmd.args([
-        "--left-pad",
-        "[",
-        "--data-file",
-        fixture.data_file_path.as_str(),
-    ]);
+    let mut show_cmd = fx.cmd(["--left-pad", "["]);
     assert_cmd_snapshot!(show_cmd, @r"
     success: true
     exit_code: 0
@@ -329,18 +234,11 @@ fn using_custom_left_pad_works() {
 #[test]
 fn using_custom_right_pad_works() {
     // GIVEN
-    let fixture = TestFixture::new();
-    let mut base_cmd = base_command();
+    let fx = Fixture::new();
+    let mut start_cmd = fx.cmd(["start", "--elapsed-mins", "12"]);
 
     // WHEN
     // THEN
-    let mut start_cmd = base_cmd.args([
-        "start",
-        "--elapsed-mins",
-        "12",
-        "--data-file",
-        fixture.data_file_path.as_str(),
-    ]);
     assert_cmd_snapshot!(start_cmd, @r"
     success: true
     exit_code: 0
@@ -349,13 +247,7 @@ fn using_custom_right_pad_works() {
     ----- stderr -----
     ");
 
-    let mut base_show_cmd = base_command();
-    let mut show_cmd = base_show_cmd.args([
-        "--right-pad",
-        "]",
-        "--data-file",
-        fixture.data_file_path.as_str(),
-    ]);
+    let mut show_cmd = fx.cmd(["--right-pad", "]"]);
     assert_cmd_snapshot!(show_cmd, @r"
     success: true
     exit_code: 0
@@ -369,12 +261,11 @@ fn using_custom_right_pad_works() {
 #[test]
 fn starting_a_break_works() {
     // GIVEN
-    let fixture = TestFixture::new();
-    let mut base_cmd = base_command();
+    let fx = Fixture::new();
+    let mut break_cmd = fx.cmd(["break"]);
 
     // WHEN
     // THEN
-    let mut break_cmd = base_cmd.args(["break", "--data-file", fixture.data_file_path.as_str()]);
     assert_cmd_snapshot!(break_cmd, @r"
     success: true
     exit_code: 0
@@ -383,8 +274,7 @@ fn starting_a_break_works() {
     ----- stderr -----
     ");
 
-    let mut base_show_cmd = base_command();
-    let mut show_cmd = base_show_cmd.args(["--data-file", fixture.data_file_path.as_str()]);
+    let mut show_cmd = fx.base_cmd();
     assert_cmd_snapshot!(show_cmd, @r"
     success: true
     exit_code: 0
@@ -397,12 +287,11 @@ fn starting_a_break_works() {
 #[test]
 fn using_a_custom_break_message_works() {
     // GIVEN
-    let fixture = TestFixture::new();
-    let mut base_cmd = base_command();
+    let fx = Fixture::new();
+    let mut break_cmd = fx.cmd(["break"]);
 
     // WHEN
     // THEN
-    let mut break_cmd = base_cmd.args(["break", "--data-file", fixture.data_file_path.as_str()]);
     assert_cmd_snapshot!(break_cmd, @r"
     success: true
     exit_code: 0
@@ -411,13 +300,7 @@ fn using_a_custom_break_message_works() {
     ----- stderr -----
     ");
 
-    let mut base_show_cmd = base_command();
-    let mut show_cmd = base_show_cmd.args([
-        "--break-msg",
-        "done!",
-        "--data-file",
-        fixture.data_file_path.as_str(),
-    ]);
+    let mut show_cmd = fx.cmd(["--break-msg", "done!"]);
     assert_cmd_snapshot!(show_cmd, @r"
     success: true
     exit_code: 0
@@ -430,18 +313,11 @@ fn using_a_custom_break_message_works() {
 #[test]
 fn stopping_a_timer_works() {
     // GIVEN
-    let fixture = TestFixture::new();
-    let mut base_cmd = base_command();
+    let fx = Fixture::new();
+    let mut start_cmd = fx.cmd(["start", "--elapsed-mins", "12"]);
 
     // WHEN
     // THEN
-    let mut start_cmd = base_cmd.args([
-        "start",
-        "--elapsed-mins",
-        "12",
-        "--data-file",
-        fixture.data_file_path.as_str(),
-    ]);
     assert_cmd_snapshot!(start_cmd, @r"
     success: true
     exit_code: 0
@@ -450,9 +326,7 @@ fn stopping_a_timer_works() {
     ----- stderr -----
     ");
 
-    let mut base_stop_cmd = base_command();
-    let mut stop_cmd =
-        base_stop_cmd.args(["break", "--data-file", fixture.data_file_path.as_str()]);
+    let mut stop_cmd = fx.cmd(["break"]);
     assert_cmd_snapshot!(stop_cmd, @r"
     success: true
     exit_code: 0
@@ -461,8 +335,7 @@ fn stopping_a_timer_works() {
     ----- stderr -----
     ");
 
-    let mut base_show_cmd = base_command();
-    let mut show_cmd = base_show_cmd.args(["--data-file", fixture.data_file_path.as_str()]);
+    let mut show_cmd = fx.base_cmd();
     assert_cmd_snapshot!(show_cmd, @r"
     success: true
     exit_code: 0
@@ -475,18 +348,11 @@ fn stopping_a_timer_works() {
 #[test]
 fn using_multiple_flags_together_works() {
     // GIVEN
-    let fixture = TestFixture::new();
-    let mut base_cmd = base_command();
+    let fx = Fixture::new();
+    let mut start_cmd = fx.cmd(["start", "--elapsed-mins", "12"]);
 
     // WHEN
     // THEN
-    let mut start_cmd = base_cmd.args([
-        "start",
-        "--elapsed-mins",
-        "12",
-        "--data-file",
-        fixture.data_file_path.as_str(),
-    ]);
     assert_cmd_snapshot!(start_cmd, @r"
     success: true
     exit_code: 0
@@ -495,8 +361,7 @@ fn using_multiple_flags_together_works() {
     ----- stderr -----
     ");
 
-    let mut base_show_cmd = base_command();
-    let mut show_cmd = base_show_cmd.args([
+    let mut show_cmd = fx.cmd([
         "--pending-block",
         "o",
         "--complete-block",
@@ -509,8 +374,6 @@ fn using_multiple_flags_together_works() {
         " ]]",
         "--num-blocks",
         "5",
-        "--data-file",
-        fixture.data_file_path.as_str(),
     ]);
     assert_cmd_snapshot!(show_cmd, @r"
     success: true
@@ -526,12 +389,11 @@ fn using_multiple_flags_together_works() {
 #[test]
 fn fails_if_num_blocks_is_greater_than_threshold() {
     // GIVEN
-    let fixture = TestFixture::new();
-    let mut base_cmd = base_command();
+    let fx = Fixture::new();
+    let mut start_cmd = fx.cmd(["start"]);
 
     // WHEN
     // THEN
-    let mut start_cmd = base_cmd.args(["start", "--data-file", fixture.data_file_path.as_str()]);
     assert_cmd_snapshot!(start_cmd, @r"
     success: true
     exit_code: 0
@@ -540,13 +402,7 @@ fn fails_if_num_blocks_is_greater_than_threshold() {
     ----- stderr -----
     ");
 
-    let mut base_show_cmd = base_command();
-    let mut show_cmd = base_show_cmd.args([
-        "--num-blocks",
-        "101",
-        "--data-file",
-        fixture.data_file_path.as_str(),
-    ]);
+    let mut show_cmd = fx.cmd(["--num-blocks", "101"]);
     assert_cmd_snapshot!(show_cmd, @r"
     success: false
     exit_code: 1
@@ -560,12 +416,11 @@ fn fails_if_num_blocks_is_greater_than_threshold() {
 #[test]
 fn fails_if_num_blocks_is_less_than_threshold() {
     // GIVEN
-    let fixture = TestFixture::new();
-    let mut base_cmd = base_command();
+    let fx = Fixture::new();
+    let mut start_cmd = fx.cmd(["start"]);
 
     // WHEN
     // THEN
-    let mut start_cmd = base_cmd.args(["start", "--data-file", fixture.data_file_path.as_str()]);
     assert_cmd_snapshot!(start_cmd, @r"
     success: true
     exit_code: 0
@@ -574,13 +429,7 @@ fn fails_if_num_blocks_is_less_than_threshold() {
     ----- stderr -----
     ");
 
-    let mut base_show_cmd = base_command();
-    let mut show_cmd = base_show_cmd.args([
-        "--num-blocks",
-        "2",
-        "--data-file",
-        fixture.data_file_path.as_str(),
-    ]);
+    let mut show_cmd = fx.cmd(["--num-blocks", "2"]);
     assert_cmd_snapshot!(show_cmd, @r"
     success: false
     exit_code: 1
@@ -594,18 +443,11 @@ fn fails_if_num_blocks_is_less_than_threshold() {
 #[test]
 fn start_fails_if_elapsed_mins_is_greater_than_threshold() {
     // GIVEN
-    let fixture = TestFixture::new();
-    let mut base_cmd = base_command();
+    let fx = Fixture::new();
 
     // WHEN
     // THEN
-    let mut start_cmd = base_cmd.args([
-        "start",
-        "--elapsed-mins",
-        "21",
-        "--data-file",
-        fixture.data_file_path.as_str(),
-    ]);
+    let mut start_cmd = fx.cmd(["start", "--elapsed-mins", "21"]);
     assert_cmd_snapshot!(start_cmd, @r"
     success: false
     exit_code: 1
