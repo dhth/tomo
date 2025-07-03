@@ -3,7 +3,10 @@ mod common;
 use common::Fixture;
 use insta_cmd::assert_cmd_snapshot;
 
-// SUCCESSES
+//-------------//
+//  SUCCESSES  //
+//-------------//
+
 #[test]
 fn shows_help() {
     // GIVEN
@@ -43,67 +46,10 @@ fn shows_help() {
 }
 
 #[test]
-fn starting_timer_works() {
-    // GIVEN
-    let fx = Fixture::new();
-    let mut start_cmd = fx.cmd(["start"]);
-
-    // WHEN
-    // THEN
-    assert_cmd_snapshot!(start_cmd, @r"
-    success: true
-    exit_code: 0
-    ----- stdout -----
-
-    ----- stderr -----
-    ");
-
-    let mut show_cmd = fx.base_cmd();
-    assert_cmd_snapshot!(show_cmd, @r"
-    success: true
-    exit_code: 0
-    ----- stdout -----
-     ▫▫▫▫▫▫▫▫▫▫ 
-
-    ----- stderr -----
-    ");
-}
-
-#[test]
-fn starting_timer_with_elapsed_time_works() {
-    // GIVEN
-    let fx = Fixture::new();
-    let mut start_cmd = fx.cmd(["start", "--elapsed-mins", "8"]);
-
-    // WHEN
-    // THEN
-    assert_cmd_snapshot!(start_cmd, @r"
-    success: true
-    exit_code: 0
-    ----- stdout -----
-
-    ----- stderr -----
-    ");
-
-    let mut show_cmd = fx.base_cmd();
-    assert_cmd_snapshot!(show_cmd, @r"
-    success: true
-    exit_code: 0
-    ----- stdout -----
-     ▪▪▪▫▫▫▫▫▫▫ 
-
-    ----- stderr -----
-    ");
-}
-
-#[test]
 fn using_custom_delimiter_works() {
     // GIVEN
     let fx = Fixture::new();
     let mut start_cmd = fx.cmd(["start"]);
-
-    // WHEN
-    // THEN
     assert_cmd_snapshot!(start_cmd, @r"
     success: true
     exit_code: 0
@@ -112,6 +58,8 @@ fn using_custom_delimiter_works() {
     ----- stderr -----
     ");
 
+    // WHEN
+    // THEN
     let mut show_cmd = fx.cmd(["--delimiter", " "]);
     assert_cmd_snapshot!(show_cmd, @r"
     success: true
@@ -128,9 +76,6 @@ fn using_custom_num_blocks_works() {
     // GIVEN
     let fx = Fixture::new();
     let mut start_cmd = fx.cmd(["start", "--elapsed-mins", "12"]);
-
-    // WHEN
-    // THEN
     assert_cmd_snapshot!(start_cmd, @r"
     success: true
     exit_code: 0
@@ -139,6 +84,8 @@ fn using_custom_num_blocks_works() {
     ----- stderr -----
     ");
 
+    // WHEN
+    // THEN
     let mut show_cmd = fx.cmd(["--num-blocks", "5"]);
     assert_cmd_snapshot!(show_cmd, @r"
     success: true
@@ -155,9 +102,6 @@ fn using_custom_pending_block_works() {
     // GIVEN
     let fx = Fixture::new();
     let mut start_cmd = fx.cmd(["start", "--elapsed-mins", "12"]);
-
-    // WHEN
-    // THEN
     assert_cmd_snapshot!(start_cmd, @r"
     success: true
     exit_code: 0
@@ -166,6 +110,8 @@ fn using_custom_pending_block_works() {
     ----- stderr -----
     ");
 
+    // WHEN
+    // THEN
     let mut show_cmd = fx.cmd(["--pending-block", "."]);
     assert_cmd_snapshot!(show_cmd, @r"
     success: true
@@ -182,9 +128,6 @@ fn using_custom_complete_block_works() {
     // GIVEN
     let fx = Fixture::new();
     let mut start_cmd = fx.cmd(["start", "--elapsed-mins", "12"]);
-
-    // WHEN
-    // THEN
     assert_cmd_snapshot!(start_cmd, @r"
     success: true
     exit_code: 0
@@ -193,6 +136,8 @@ fn using_custom_complete_block_works() {
     ----- stderr -----
     ");
 
+    // WHEN
+    // THEN
     let mut show_cmd = fx.cmd(["--complete-block", "x"]);
     assert_cmd_snapshot!(show_cmd, @r"
     success: true
@@ -209,9 +154,6 @@ fn using_custom_left_pad_works() {
     // GIVEN
     let fx = Fixture::new();
     let mut start_cmd = fx.cmd(["start", "--elapsed-mins", "12"]);
-
-    // WHEN
-    // THEN
     assert_cmd_snapshot!(start_cmd, @r"
     success: true
     exit_code: 0
@@ -220,6 +162,8 @@ fn using_custom_left_pad_works() {
     ----- stderr -----
     ");
 
+    // WHEN
+    // THEN
     let mut show_cmd = fx.cmd(["--left-pad", "["]);
     assert_cmd_snapshot!(show_cmd, @r"
     success: true
@@ -236,9 +180,6 @@ fn using_custom_right_pad_works() {
     // GIVEN
     let fx = Fixture::new();
     let mut start_cmd = fx.cmd(["start", "--elapsed-mins", "12"]);
-
-    // WHEN
-    // THEN
     assert_cmd_snapshot!(start_cmd, @r"
     success: true
     exit_code: 0
@@ -247,6 +188,8 @@ fn using_custom_right_pad_works() {
     ----- stderr -----
     ");
 
+    // WHEN
+    // THEN
     let mut show_cmd = fx.cmd(["--right-pad", "]"]);
     assert_cmd_snapshot!(show_cmd, @r"
     success: true
@@ -259,100 +202,10 @@ fn using_custom_right_pad_works() {
 }
 
 #[test]
-fn starting_a_break_works() {
-    // GIVEN
-    let fx = Fixture::new();
-    let mut break_cmd = fx.cmd(["break"]);
-
-    // WHEN
-    // THEN
-    assert_cmd_snapshot!(break_cmd, @r"
-    success: true
-    exit_code: 0
-    ----- stdout -----
-
-    ----- stderr -----
-    ");
-
-    let mut show_cmd = fx.base_cmd();
-    assert_cmd_snapshot!(show_cmd, @r"
-    success: true
-    exit_code: 0
-    ----- stdout -----
-     \o/ 
-    ----- stderr -----
-    ");
-}
-
-#[test]
-fn using_a_custom_break_message_works() {
-    // GIVEN
-    let fx = Fixture::new();
-    let mut break_cmd = fx.cmd(["break"]);
-
-    // WHEN
-    // THEN
-    assert_cmd_snapshot!(break_cmd, @r"
-    success: true
-    exit_code: 0
-    ----- stdout -----
-
-    ----- stderr -----
-    ");
-
-    let mut show_cmd = fx.cmd(["--break-msg", "done!"]);
-    assert_cmd_snapshot!(show_cmd, @r"
-    success: true
-    exit_code: 0
-    ----- stdout -----
-     done! 
-    ----- stderr -----
-    ");
-}
-
-#[test]
-fn stopping_a_timer_works() {
-    // GIVEN
-    let fx = Fixture::new();
-    let mut start_cmd = fx.cmd(["start", "--elapsed-mins", "12"]);
-
-    // WHEN
-    // THEN
-    assert_cmd_snapshot!(start_cmd, @r"
-    success: true
-    exit_code: 0
-    ----- stdout -----
-
-    ----- stderr -----
-    ");
-
-    let mut stop_cmd = fx.cmd(["break"]);
-    assert_cmd_snapshot!(stop_cmd, @r"
-    success: true
-    exit_code: 0
-    ----- stdout -----
-
-    ----- stderr -----
-    ");
-
-    let mut show_cmd = fx.base_cmd();
-    assert_cmd_snapshot!(show_cmd, @r"
-    success: true
-    exit_code: 0
-    ----- stdout -----
-     \o/ 
-    ----- stderr -----
-    ");
-}
-
-#[test]
 fn using_multiple_flags_together_works() {
     // GIVEN
     let fx = Fixture::new();
     let mut start_cmd = fx.cmd(["start", "--elapsed-mins", "12"]);
-
-    // WHEN
-    // THEN
     assert_cmd_snapshot!(start_cmd, @r"
     success: true
     exit_code: 0
@@ -361,6 +214,8 @@ fn using_multiple_flags_together_works() {
     ----- stderr -----
     ");
 
+    // WHEN
+    // THEN
     let mut show_cmd = fx.cmd([
         "--pending-block",
         "o",
@@ -385,15 +240,40 @@ fn using_multiple_flags_together_works() {
     ");
 }
 
-// FAILURES
+#[test]
+fn using_a_custom_break_message_works() {
+    // GIVEN
+    let fx = Fixture::new();
+    let mut break_cmd = fx.cmd(["break"]);
+    assert_cmd_snapshot!(break_cmd, @r"
+    success: true
+    exit_code: 0
+    ----- stdout -----
+
+    ----- stderr -----
+    ");
+
+    // WHEN
+    // THEN
+    let mut show_cmd = fx.cmd(["--break-msg", "done!"]);
+    assert_cmd_snapshot!(show_cmd, @r"
+    success: true
+    exit_code: 0
+    ----- stdout -----
+     done! 
+    ----- stderr -----
+    ");
+}
+
+//------------//
+//  FAILURES  //
+//------------//
+
 #[test]
 fn fails_if_num_blocks_is_greater_than_threshold() {
     // GIVEN
     let fx = Fixture::new();
     let mut start_cmd = fx.cmd(["start"]);
-
-    // WHEN
-    // THEN
     assert_cmd_snapshot!(start_cmd, @r"
     success: true
     exit_code: 0
@@ -402,6 +282,8 @@ fn fails_if_num_blocks_is_greater_than_threshold() {
     ----- stderr -----
     ");
 
+    // WHEN
+    // THEN
     let mut show_cmd = fx.cmd(["--num-blocks", "101"]);
     assert_cmd_snapshot!(show_cmd, @r"
     success: false
@@ -418,9 +300,6 @@ fn fails_if_num_blocks_is_less_than_threshold() {
     // GIVEN
     let fx = Fixture::new();
     let mut start_cmd = fx.cmd(["start"]);
-
-    // WHEN
-    // THEN
     assert_cmd_snapshot!(start_cmd, @r"
     success: true
     exit_code: 0
@@ -429,6 +308,8 @@ fn fails_if_num_blocks_is_less_than_threshold() {
     ----- stderr -----
     ");
 
+    // WHEN
+    // THEN
     let mut show_cmd = fx.cmd(["--num-blocks", "2"]);
     assert_cmd_snapshot!(show_cmd, @r"
     success: false
@@ -437,23 +318,5 @@ fn fails_if_num_blocks_is_less_than_threshold() {
 
     ----- stderr -----
     Error: number of blocks needs to be between 3 and 100
-    ");
-}
-
-#[test]
-fn start_fails_if_elapsed_mins_is_greater_than_threshold() {
-    // GIVEN
-    let fx = Fixture::new();
-
-    // WHEN
-    // THEN
-    let mut start_cmd = fx.cmd(["start", "--elapsed-mins", "21"]);
-    assert_cmd_snapshot!(start_cmd, @r"
-    success: false
-    exit_code: 1
-    ----- stdout -----
-
-    ----- stderr -----
-    Error: elapsed mins cannot be greater than 20
     ");
 }
