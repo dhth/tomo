@@ -25,7 +25,7 @@ path = "src/main.rs"
 doc = false
 
 [dependencies]
-anyhow = "1.0.98"
+anyhow = "1.0.99"
 chrono = "0.4.41"
 clap = { version = "4.5.43", features = ["derive"] }
 dirs = "6.0.0"
