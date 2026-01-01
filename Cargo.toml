@@ -31,9 +31,9 @@ clap = { version = "4.5.53", features = ["derive"] }
 dirs = "6.0.0"
 
 [dev-dependencies]
-insta = "1.44.3"
+insta = "1.45.1"
 insta-cmd = "0.6.0"
-tempfile = "3.23.0"
+tempfile = "3.24.0"
 
 [profile.dev.package]
 insta.opt-level = 3
