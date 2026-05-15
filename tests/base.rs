@@ -34,7 +34,7 @@ fn shows_help() {
       -c, --complete-block <STRING>  String to represent a "complete" block in the progress bar [default: ▪]
       -l, --left-pad <STRING>        String to pad the output with on the LHS [default: " "]
       -r, --right-pad <STRING>       String to pad the output with on the RHS [default: " "]
-      -d, --delimiter <STRING>       Delimiter between progress bar chunks [default: ]
+      -d, --delimiter <STRING>       Delimiter between progress bar chunks [default: ""]
       -n, --num-blocks <NUM>         Number of blocks to show in progress bar [default: 10]
           --finished-msg <STRING>    Message to show when timer is finished [default: done]
           --break-msg <STRING>       Message to show when on a break [default: \o/]
